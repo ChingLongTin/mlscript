@@ -41,6 +41,7 @@ class MLsCompiler(preludeFile: os.Path, mkOutput: ((Str => Unit) => Unit) => Uni
   
   val runtimeFile: os.Path = preludeFile/os.up/os.up/os.up/"mlscript-compile"/"Runtime.mjs"
   val termFile: os.Path = preludeFile/os.up/os.up/os.up/"mlscript-compile"/"Term.mjs"
+  val blockFile: os.Path = preludeFile/os.up/os.up/os.up/"mlscript-compile"/"Block.mjs"
   
   
   val report = ReportFormatter: outputConsumer =>
@@ -87,6 +88,7 @@ class MLsCompiler(preludeFile: os.Path, mkOutput: ((Str => Unit) => Unit) => Uni
       val blk = new semantics.Term.Blk(
         semantics.Import(State.runtimeSymbol, runtimeFile.toString, runtimeFile)
         :: semantics.Import(State.termSymbol, termFile.toString, termFile)
+        :: semantics.Import(State.termSymbol, termFile.toString, blockFile) // TODO: always include this?
         :: blk0.stats,
         blk0.res
       )
