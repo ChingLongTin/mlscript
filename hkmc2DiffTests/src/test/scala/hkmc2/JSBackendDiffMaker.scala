@@ -59,9 +59,8 @@ abstract class JSBackendDiffMaker extends MLsDiffMaker:
     h.execute(s"const $definitionMetadataNme = Symbol.for(\"mlscript.definitionMetadata\");")
     h.execute(s"const $prettyPrintNme = Symbol.for(\"mlscript.prettyPrint\");")
     if importQQ.isSet then importRuntimeModule(termNme, termFile)
-    if stageCode.isSet then
-      importRuntimeModule(blockNme, blockFile)
-      importRuntimeModule(shapeNme, shapeFile)
+    if stageCode.isSet then importRuntimeModule(blockNme, blockFile)
+      // importRuntimeModule(shapeNme, shapeFile)
     h
   
   private var hostCreated = false
