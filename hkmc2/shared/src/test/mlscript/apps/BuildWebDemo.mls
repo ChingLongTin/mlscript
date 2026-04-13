@@ -253,7 +253,7 @@ build of
 //│ > Processing src/test/mlscript-compile/StrOps.mjs
 //│ > Processing src/test/mlscript-compile/Runtime.mjs
 //│ > Collected 19 files
-//│ > There are 22 files in the output folder.
+//│ > There are 21 files in the output folder.
 //│ > Removing Block.mjs
 //│ > Removing CachedHash.mjs
 //│ > Removing Examples.mjs
