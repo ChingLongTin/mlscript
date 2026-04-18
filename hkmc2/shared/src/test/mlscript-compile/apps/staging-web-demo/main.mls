@@ -49,6 +49,7 @@ let topLevelModulePattern = new RegExp("""^\s*(?:staged\s+)?module\s+([A-Za-z_][
 // TODO: do not skip staged 
 
 let specializedCode = ""
+let compileAndSpecializationTime = 0.0
 
 examples Iter.each of case [key, example] then
   let option = document.createElement of "option"
@@ -96,6 +97,7 @@ parseButton.addEventListener of "click", event =>
           None then
             set statusPanel.textContent = "No staged module found."
             ""
+      let begin = globalThis.performance.now()
       let res = MLscript.compile of
         traces:
           codegen: false
@@ -110,7 +112,9 @@ parseButton.addEventListener of "click", event =>
       if hasGeneratedCode do
         console.log(generatedVars + generatedCode)
         let res = globalThis.eval(generatedVars + generatedCode)
+        let end = globalThis.performance.now()
         set specializedCode = res
+        set compileAndSpecializationTime = end - begin
         sections.push(res)
       if res.codegen.diagnostics.length > 0 do
         sections.push of "Diagnostics:\n" + res.codegen.diagnostics.join("\n")
@@ -121,7 +125,7 @@ parseButton.addEventListener of "click", event =>
         if res.codegen.diagnostics.length > 0 then
           "Compilation completed with code generation diagnostics."
         else if hasGeneratedCode then
-          "Compilation succeeded. Specialized code is shown below."
+          "Compilation succeeded. Time: " + compileAndSpecializationTime.toString() + "ms"
         else
           "Compilation completed. No specialized code was generated."
       
