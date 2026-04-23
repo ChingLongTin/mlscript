@@ -101,7 +101,7 @@ fun binOpSet(op: Str, s1: ShapeSet, s2: ShapeSet) =
     op is 
       "&&" and 
         isFalseShape(s1) then mkLit(false)
-        isFalseShape(s2) then mkLit(true)
+        isFalseShape(s2) then mkLit(false)
       "||" and
         isTrueShape(s1) then mkLit(true)
         isTrueShape(s2) then mkLit(true)

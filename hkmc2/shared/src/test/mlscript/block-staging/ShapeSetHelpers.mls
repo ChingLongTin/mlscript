@@ -239,11 +239,9 @@ testBinOp("==", 10, 10)
 testBinOp("===", 10, "10") 
 //│ = false
 
-:fixme
 :expect false
 testBinOp("&&", true, false)
-//│ ═══[RUNTIME ERROR] Expected: 'false', got: 'true'
-//│ = true
+//│ = false
 
 fun testUnaryOp(op, v) =
   let args = [Arg(ValueLit(v))]
@@ -348,7 +346,7 @@ module M with
 :ignore
 val MSym = ValueRef(ModuleSymbol("M", M))
 //│ ╔══[COMPILATION ERROR] Unexpected moduleful reference of type M.
-//│ ║  l.349: 	val MSym = ValueRef(ModuleSymbol("M", M))
+//│ ║  l.347: 	val MSym = ValueRef(ModuleSymbol("M", M))
 //│ ║         	                                      ^
 //│ ╙── Module argument passed to a non-module parameter.
 //│ MSym = ValueRef(ModuleSymbol("M", class M))
