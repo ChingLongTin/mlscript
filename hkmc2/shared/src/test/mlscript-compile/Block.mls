@@ -1,7 +1,7 @@
 import "./Predef.mls"
 import "./Option.mls"
 import "./StrOps.mls"
-import "./CachedHash.mls"
+import "./Runtime.mls"
 
 // import "fs"
 // import "process"
@@ -20,15 +20,24 @@ type Opt[A] = Option[A]
 
 type Literal = null | undefined | Str | Int | Num | Bool
 
-type ParamList = Array[Symbol]
+type ParamList = Array[Param]
 
-class Symbol(val name: Str) extends CachedHash
-class VirtualClassSymbol(val name: Str) extends Symbol(name)
-class ClassSymbol(val name: Str, val value, val paramsOpt: Option[ParamList], val auxParams: Array[ParamList]) extends Symbol(name)
-class ModuleSymbol(val name: Str, val value) extends Symbol(name)
+class Symbol(val name: Str)
+class ClassSymbol(val name: Str) extends Symbol(name)
+class VirtualClassSymbol(val name: Str) extends ClassSymbol(name)
+class ConcreteClassSymbol(val name: Str, val value: Class, val paramsOpt: Opt[ParamList], val auxParams: Array[ParamList]) extends ClassSymbol(name)
+class ModuleSymbol(val name: Str, val value: Class) extends Symbol(name)
+class NoSymbol() extends Symbol("$no_symbol$")
+
+class Constraint with
+  constructor
+    Dynamic()
+    Static()
+
+class Param(val constraint: Opt[Constraint], val sym: Symbol)
 class Arm(val cse: Case, val body: Block)
 
-fun isPrimitiveType(sym: Symbol) = 
+fun isPrimitiveType(sym: Symbol) =
   if sym.name is
     "Str" then true
     "Int" then true
@@ -45,18 +54,15 @@ fun isPrimitiveTypeOf(sym: Symbol, l: Literal) =
     else false
 
 // TODO: move this to somewhere appropriate
-// TODO: is this the only way? we cannot assign a property to a class that is not extensible 
-fun checkMap(symbolMap, key, value) = 
-  // this approach of updating the class value doesn't work if the class is not extensible
-  // if classValue.("stagedSymbol") is
-  //   v and v is Symbol then v
-  //   else set classValue.("stagedSymbol") = value; value
-  // console.log(symbolMap, value)
-  // let key = value.hash()
-  let v = symbolMap.get(key)
-  if v is 
-    Symbol then v
-    else symbolMap.set(key, value); value
+// A staged class with no parameters has the same runtime value as its staged companion, this causes an unwated collision when creating a symbol for both the class and the module, 
+// so we need to split the map into the which type of symbol used.
+class SymbolMap(val classMap: Map[Class, ClassSymbol], val moduleMap: Map[Class, ModuleSymbol]) with
+  fun checkMap(mapType: String, key: Class, value: ClassSymbol | ModuleSymbol) =
+    let map = this.(mapType)
+    let v = map.get(key)
+    if v is
+      Symbol then v
+      else map.set(key, value); value
 
 class Arg(val value: Path) 
 
@@ -66,7 +72,7 @@ class Case with
     Cls(val cls: ClassSymbol, val path: Path)
     Tup(val len: Int)
 
-class Result extends CachedHash with 
+class Result with
   constructor
     Call(val _fun: Path, val args: Array[Arg])
     Instantiate(val cls: Path, val args: Array[Arg]) // assume immutable
@@ -81,8 +87,8 @@ class Path extends Result with
 
 class Defn with 
   constructor 
-    ValDefn(val tsym: Symbol, val sym: Symbol, val rhs: Path)
-    ClsLikeDefn(val sym: ClassSymbol, val methods: Array[FunDefn], val companion: Opt[ClsLikeBody]) // companion unused
+    ValDefn(val owner: Opt[Symbol], val sym: Symbol, val rhs: Path)
+    ClsLikeDefn(val sym: ConcreteClassSymbol, val methods: Array[FunDefn], val companion: Opt[ClsLikeBody]) // companion unused
     FunDefn(val sym: Symbol, val params: Array[ParamList], val body: Block)
 
 class ClsLikeBody(val isym: Symbol, val methods: Array[FunDefn], val publicFields: Array[[Symbol, Symbol]]) // unused
@@ -93,129 +99,146 @@ class Block with
     Return(val res: Result, val implct: Bool)
     Assign(val lhs: Symbol, val rhs: Result, val rest: Block)
     Define(val defn: Defn, val rest: Block)
-    // TODO: [fyp] handle Scoped nodes
     Scoped(val symbols: Array[Symbol], val rest: Block)
     End()
   
 fun concat(b1: Block, b2: Block) = if b1 is
+  Return then b1
+  End then b2
   Match(scrut, arms, dflt, rest) then Match(scrut, arms, dflt, concat(rest, b2))
-  Return(res, implct) then b1
   Assign(lhs, rhs, rest) then Assign(lhs, rhs, concat(rest, b2))
   Define(defn, rest) then Define(defn, concat(rest, b2))
   Scoped(symbols, rest) then Scoped(symbols, concat(rest, b2))
-  End() then b2
 
 fun indent(s: Str) = s.replaceAll("\n", "\n  ")
 
-fun showLiteral(l: Literal) =
-  if l is 
-    undefined then "undefined"
-    null then "null"
-    Str then "\"" + l.toString() + "\""
-    else l.toString()
+// we write .map(f(_)) instead of .map(f) here because of method debinding, see https://github.com/hkust-taco/mlscript/issues/450
+class Printer(val owner: Opt[Class]) with
+  fun showLiteral(l: Literal) =
+    if l is 
+      undefined then "undefined"
+      null then "null"
+      Str then "\"" + l.toString() + "\""
+      else l.toString()
 
-fun showSymbol(s: Symbol) = if s.name is
-  "runtime" then "Runtime"
-  else s.name.replaceAll("$", "_")
+  fun showSymbol(s: Symbol) = s.name.replaceAll("$", "_")
 
-fun showPath(p: Path): Str =
-  if p is
-    Select(qual, name) then showPath(qual) + "." + showSymbol(name)
-    DynSelect(qual, fld, arrayIdx) then showPath(qual) + ".(" + showPath(fld) + ")" 
-    ValueRef(l) then showSymbol(l)
-    ValueLit(lit) then showLiteral(lit)
+  fun showPath(p: Path): Str =
+    if p is
+      // avoids needing to import the runtime module
+      Select(ValueRef(Symbol("runtime")), ModuleSymbol("Unit", Runtime.Unit)) then "()"
+      Select(qual, name) and
+        // remove selection to owner for values defined within the owner
+        qual is ValueRef(sym) and owner is Some(owner) and sym == owner then showSymbol(name) // TODO: check if we should use `==` here
+        qual is ValueRef(sym) and sym is ClassSymbol then "this." + showSymbol(name)
+        else
+          showPath(qual) + "." + showSymbol(name)
+      DynSelect(qual, fld, false) then showPath(qual) + ".(" + showPath(fld) + ")"
+      DynSelect(qual, fld, true) then showPath(qual) + ".[" + showPath(fld) + "]"
+      ValueRef(l) then showSymbol(l)
+      ValueLit(lit) then showLiteral(lit)
 
-fun showArg(arg: Arg) =
-  showPath(arg.value)
+  fun showArg(arg: Arg) =
+    showPath(arg.value)
 
-fun showArgs(args: Array[Arg]) =
-  args.map(showArg).join(", ")
+  fun showArgs(args: Array[Arg]) =
+    args.map(showArg(_)).join(", ")
+  fun showResult(r: Result): Str =
+    if r is
+      Path then showPath(r)
+      Call(fun_, args) and
+        // use infix to avoid parsing + and - as taking a unary argument
+        args is [lhs, rhs] and fun_ is
+          ValueRef(Symbol("+")) then showArg(lhs) + " + " + showArg(rhs)
+          ValueRef(Symbol("-")) then showArg(lhs) + " - " + showArg(rhs)
+          ValueRef(Symbol("*")) then showArg(lhs) + " * " + showArg(rhs)
+          ValueRef(Symbol("/")) then showArg(lhs) + " / " + showArg(rhs)
+        else showPath(fun_) + "(" + showArgs(args) + ")"
+      Instantiate(cls, args) then "new " + showPath(cls) + (if args.length != 0 then "(" + showArgs(args) + ")" else "")
+      Tuple(elems) then "[" + showArgs(elems) + "]"
+      _ then "<unknown result:" ~ r ~ ">"
 
-fun showResult(r: Result): Str =
-  if r is
-    Path then showPath(r)
-    Call(fun_, args) and
-      args is [lhs, rhs] and fun_ is
-        ValueRef(Symbol("+")) then showArg(lhs) + "+" + showArg(rhs)
-        ValueRef(Symbol("-")) then showArg(lhs) + "-" + showArg(rhs)
-        ValueRef(Symbol("*")) then showArg(lhs) + "*" + showArg(rhs)
-        ValueRef(Symbol("/")) then showArg(lhs) + "/" + showArg(rhs)
-      else showPath(fun_) + "(" + showArgs(args) + ")"
-    Instantiate(cls, args) then "new " + showPath(cls) + "(" + showArgs(args) + ")"
-    Tuple(elems) then "[" + showArgs(elems) + "]"
-    _ then "<unknown result:" ~ r ~ ">"
+  // Case (match arm patterns)
+  fun showCase(c) =
+    if c is
+      Lit(l) then showLiteral(l)
+      Cls(cls, _) then showSymbol(cls)
+      Tup(len) then "[" + Array(len).fill("_").join(", ") + "]"
+      _ then "<unknown case>"
 
-fun showCase(c) =
-  if c is
-    Lit(l) then showLiteral(l)
-    Cls(cls, p) then showSymbol(cls) +
-      if isPrimitiveType(cls) then ""
-        else showParamsOpt(cls.paramsOpt)
-    Tup(len) then "[" + Array(len).fill("_").join(", ") + "]"
-    _ then "<unknown case>"
+  fun showArm(a) =
+    showCase(a.cse) + " then" + (if a.body is Return then " " else "\n  ") + indent(showBlock(a.body))
 
-fun showArm(a) =
-  showCase(a.cse) + " then" + (if a.body is Return then " " else "\n  ") + indent(showBlock(a.body))
+  fun showParams(pl: ParamList) =
+    // do not print constraints to next stage
+    "(" + pl.map(p => showSymbol(p.sym)).join(", ") + ")"
 
-fun showParams(p: ParamList) =
-  "(" + p.map(showSymbol(_)).join(", ") + ")"
+  fun showCtorParams(pl: ParamList) =  
+    "(" + pl.map(p => "val " + showSymbol(p.sym)).join(", ") + ")"
 
-fun showParamsOpt(p) = 
-  if p is
-    Some(s) then showParams(s)
-    None then ""
+  fun showParamsOpt(p) =
+    if p is
+      Some(s) then showCtorParams(s)
+      None then ""
 
-fun showParamList(ps: Array[ParamList]) =
-  ps.map(showParams).join("")
+  fun showParamList(ps: Array[ParamList]) =
+    ps.map(showParams(_)).join("")
 
-fun showDefn(d: Defn): Str =
-  if d is
-    FunDefn(sym, ps, body) then
-      "fun " + showSymbol(sym) + showParamList(ps) + " =" +
-      (if body is Return then " " else "\n  ") + indent(showBlock(body))
-    ClsLikeDefn(sym, methods, _) then
-      "class " + showSymbol(sym) + showParamsOpt(sym.paramsOpt) + sym.auxParams.map(showParams).join("")
-        + if methods is [] then "" else " with \n  " + indent(methods.map(showDefn).join("\n"))
-    ValDefn(owner, sym, rhs) then
-      (if owner is Some(owner) then showSymbol(owner) else "")
-        + "." + showSymbol(sym) + " = " + showPath(rhs)
-    _ then "<unknown defn: " + d.toString() + " >"
+  fun showDefn(d: Defn): Str =
+    if d is
+      FunDefn(sym, ps, body) then
+        "fun " + showSymbol(sym) + showParamList(ps) + " =" +
+        (if body is Return | End then " " else "\n  ") + indent(showBlock(body))
+      ClsLikeDefn(sym, methods, _) then
+        "class " + showSymbol(sym) + showParamsOpt(sym.paramsOpt) + sym.auxParams.map(showParams(_)).join("")
+          + indent((if methods is [] then "" else " with\n") + methods.map(showDefn(_)).join("\n"))
+      // TODO: used to represent assignments in constructors, which still need some adjustments
+      ValDefn(owner, sym, rhs) then
+        "val " + showSymbol(sym) + " = " + showPath(rhs)
+      _ then "<unknown defn: " + d.toString() + " >"
 
-fun showBlock(b) =
-  if b is
-    Assign(lhs, rhs, rest) then
-      showSymbol(lhs) + " = " + showResult(rhs) + showRestBlock(rest)
-    Define(d, rest) then
-      showDefn(d) + showRestBlock(rest)
-    Return(res, _) then
-      showResult(res)
-    Match(scrut, arms, dflt, rest) then
-      "if " + showPath(scrut) + " is"
-      + indent("\n" + arms.map(showArm).join("\n"))
-      + indent(if dflt is Some(db) then "\nelse" + indent("\n" + showBlock(db)) else "") 
-      + showRestBlock(rest)
-    Scoped(symbols, rest) then
-      symbols.map(showSymbol).map("let " + _).join("\n") + showRestBlock(rest)
-    End() then "()"
-    _ then "<unknown block:" ~ b ~ ">"
+  fun showBlock(b) =
+    if b is
+      Assign(lhs, rhs, rest) then
+        (if lhs is NoSymbol then "" else showSymbol(lhs) + " = ")
+          + showResult(rhs) + showRestBlock(rest)
+      Define(d, rest) then
+        showDefn(d) + showRestBlock(rest)
+      Return(res, _) then
+        showResult(res)
+      Match(scrut, arms, dflt, rest) then
+        "if " + showPath(scrut) + " is"
+        + indent("\n" + arms.map(showArm(_)).join("\n"))
+        + if dflt is Some(db) then indent("\nelse" + indent((if db is Return then " " else "\n") + showBlock(db))) else ""
+        + showRestBlock(rest)
+      Scoped(symbols, rest) then
+        // but this one must use the function argument instead of a lambda...
+        "let {" + symbols.map(showSymbol).join(", ") + "}" + showRestBlock(rest)
+      End() then "()"
+      _ then "<unknown block: " + b.toString() + " >"
 
-// removes trailing newline
-fun showRestBlock(b : Block): Str =
-  if b is End then "" else "\n" + showBlock(b)
+  // removes trailing newline
+  fun showRestBlock(b : Block): Str =
+    if b is End then "" else "\n" + showBlock(b)
 
-fun show(x) =
-  if x is
-    Symbol then showSymbol(x)
-    Path then showPath(x)
-    Result then showResult(x)
-    Case then showCase(x)
-    Defn then showDefn(x)
-    Block then showBlock(x)
+  fun show(x) =
+    if x is
+      Symbol then showSymbol(x)
+      Path then showPath(x)
+      Result then showResult(x)
+      Case then showCase(x)
+      Defn then showDefn(x)
+      Block then showBlock(x)
+    else
+      "<unknown>"
+  
+  fun printCode(x) =
+    print(show(x))
 
-fun printCode(x) = 
-  print(show(x))
+  fun printModule(name, methods) = print("module " + name + " with" + indent("\n" + methods.map(showDefn(_)).join("\n")))
 
-fun printModule(name, methods) = print("module " + name + " with" + indent("\n" + methods.map(showDefn).join("\n")))
+module Printer with
+  val default = Printer(None)
 
 fun genMod(name, methods) =
   "module " + name + " with" + indent("\n" + methods.map(showDefn).join("\n"))
@@ -231,3 +254,18 @@ fun codegen(name, methods, file) = ()
   // let newData = code
   // if newData != originData do
   //   fs.writeFileSync(fullpath, newData, "utf8")
+
+fun generateAll(name, file, ...modules) =
+  let fullpath = path.join of process.cwd(), file
+  if not fs.existsSync(fullpath) do
+    fs.mkdirSync(path.dirname(fullpath), recursive: true)
+    fs.writeFileSync(fullpath, "", "utf8")
+  let code = fold((res, p) => if p is
+    [mod, name, source] then
+      mod.propagate()
+      [res.0 + "import \"" + source + "\"\n", res.1 + "open " + name + "\n", res.2 + indent(mod.("cache$" + name).toString()) + "\n"]
+  )(["", "", ""], ...modules)
+  let originData = fs.readFileSync(fullpath, "utf8")
+  let newData = "#config(noFreeze: true)\n" + code.0 + "\n" + code.1 + "\n" + "module " + name + " with" + indent("\n" + code.2)
+  if newData != originData do
+    fs.writeFileSync(fullpath, newData, "utf8")

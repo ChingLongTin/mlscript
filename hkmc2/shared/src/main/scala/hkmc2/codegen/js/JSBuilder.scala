@@ -26,7 +26,7 @@ abstract class CodeBuilder:
   type Context
   
 
-class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
+class JSBuilder(using Config, TL, State, Ctx) extends CodeBuilder:
   import JSBuilder.*
   
   def checkMLsCalls: Bool = false
@@ -247,7 +247,7 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
       case Match(
         scrut_ @ Value.Ref(scrutSym_, _),                   // The scrutinee is a ref.
         (Case.Lit(Tree.IntLit(curVal_)), b) :: Nil,         // There is only one case matching an int literal.
-        S(End(_)), rest                                     // Default case exists and does nothing.
+        S(End(_)) | N, rest                                 // Default case exists and does nothing.
       )
         if scrutSym.map(_ === scrutSym_).getOrElse(true)    // The scrutinee is the same as the one before.
         && curVal.map(_ === curVal_).getOrElse(true)        // The matched int literal is one previously set.
@@ -270,8 +270,6 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
   def returningTerm(t: Block, endSemi: Bool)(using Raise, Scope): Document =
     def mkSemi = if endSemi then ";" else ""
     t match
-    case _: HandleBlock =>
-      errStmt(msg"This code requires effect handler instrumentation but was compiled without it.")
     case Assign(l, r, rst) if l is State.noSymbol =>
       doc" # ${result(r)};${returningTerm(rst, endSemi)}"
     case Assign(l, r, rst) =>
@@ -293,7 +291,15 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
         case N =>
           doc"${getVar(sym, sym.toLoc)} = ${result(p)};${returningTerm(rst, endSemi)}"
         case S(owner) =>
-          doc"${mkThis(owner)}${fieldSelect(sym.nme)} = ${result(p)};${returningTerm(rst, endSemi)}"
+          val thisDoc = mkThis(owner)
+          val nme = sym.nme
+          owner match 
+          case mod: ModuleOrObjectSymbol if (mod.tree.k is syntax.Mod) && (nme == "name" || nme == "length") =>
+            // * JavaScript class constructors have built-in non-writable `name` and `length` properties.
+            // * Use Object.defineProperty to override them in module/class static contexts.
+            doc"Object.defineProperty(${thisDoc}, ${nme.escaped}, { configurable: true, enumerable: true, writable: true, value: ${result(p)} });${returningTerm(rst, endSemi)}"
+          case _ =>
+            doc"${thisDoc}${fieldSelect(nme)} = ${result(p)};${returningTerm(rst, endSemi)}"
       case defn: (FunDefn | ClsLikeDefn) =>
         
         val outerScope = scope
@@ -412,7 +418,7 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
             
             val ctorCode = scope.nest.givenIn:
               val preCtorCode = nonNestedScoped(preCtor)(bd => block(bd, true))
-              doc"$preCtorCode$singletonInit${nonNestedScoped(ctor)(bd => block(bd, true))}${
+              doc"$preCtorCode$singletonInit${nonNestedScoped(ctor)(bd => block(bd, endSemi = true))}${
                   kind match
                   case syntax.Obj =>
                     doc" # ${defineProperty(doc"this", "class", doc"${scope.lookup_!(isym, isym.toLoc)}")};"
@@ -436,10 +442,6 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
                 case (psDoc, doc) => doc"(${psDoc.mkDocument(", ")}) => $doc"
               doc" # return $funBod"
             
-            val ctorHead = doc"constructor(${
-                  initialCtorParams.unzip._2.mkDocument(", ")
-                })"
-            
             val ctorBod = {{
                 val extraPath = if paramsOpt.isDefined then ".class" else ""
                 doc" # static " :: braced:
@@ -452,7 +454,10 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
                       doc" # ${result(Value.Ref(owner, N))}.${sym.nme}$extraPath = $v"
                     case N =>
                       doc" # ${getVar(sym, sym.toLoc)}$extraPath = $v"
-              }} :/: ctorHead :: " " :: braced(ctorAux)
+              }} :: (
+                if ctorAux.isEmpty then doc""
+                else doc" # constructor(${initialCtorParams.unzip._2.mkDocument(", ")}) " :: braced(ctorAux)
+              )
             
             val clsJS = doc"class ${scope.lookup_!(isym, isym.toLoc)}${
                 par.map(p => doc" extends ${
@@ -552,31 +557,27 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
     
     case Match(scrut, Nil, els, rest) =>
       val e = els match
-      case S(el) => nonNestedScoped(el)(bod => returningTerm(bod, endSemi = true))
+      case S(el) => nonBracedScoped(el)(bod => returningTerm(bod, endSemi = true))
       case N => doc""
       e :: returningTerm(rest, endSemi)
-    case IfIntChain(scrut, cases, rest) =>
-      val switchBod = cases.foldRight(doc""): (arm, acc) =>
-        acc :: doc" # case ${arm._1.toString}: #{ ${
-          nonNestedScoped(arm._2)(bd => returningTerm(bd, endSemi = true))
-        } #} "
-      doc" # switch (${result(scrut)}) { #{ ${switchBod} #}  # }" :: returningTerm(rest, endSemi)
     case Match(scrut, (Case.Lit(lit), End(msg)) :: Nil, S(el), rest) =>
       val sd = result(scrut)
-      val e = braced(nonNestedScoped(el)(res => returningTerm(res, endSemi = false)))
+      val e = braced(nonBracedScoped(el)(res => returningTerm(res, endSemi = false)))
       doc" # if ($sd !== ${lit.idStr}) $e" :: returningTerm(rest, endSemi)
-    case Match(scrut, arms, els, rest)
-    if arms.sizeCompare(1) > 0 && arms.forall(_._1.isInstanceOf[Case.Lit]) =>
-      val l = arms.foldLeft(doc""): (acc, arm) =>
-        acc :: doc" # case ${arm._1.asInstanceOf[Case.Lit].lit.idStr}: #{ ${
-          nonNestedScoped(arm._2)(bd => returningTerm(bd, endSemi = true))
-        } # break; #} "
-      val e = els match
-        case S(el) =>
-          doc" # default: #{ ${ nonNestedScoped(el)(bd => returningTerm(bd, endSemi = true)) } # break; #} "
-        case N => doc""
-      doc" # switch (${result(scrut)}) { #{ ${l :: e} #}  # }" :: returningTerm(rest, endSemi)
-    case Match(scrut, hd :: tl, els, rest) =>
+    case SpecializedSwitch(scrut, cases, dflt, rest) =>
+      val switchBod = cases.foldLeft(doc""): (acc, arm) =>
+        val needsBreak = arm.isInstanceOf[SwitchCase.ExplicitBreak]
+        acc :: doc" # case ${result(Value.Lit(arm.litValue))}: #{ ${
+          // * Note: we use `nonNestedScoped` here because in JS, `case` clauses do not create a new scope,
+          // * so something like `switch (x) { case 1: let y = 1; break; case 2: let y = 2 }` is ill-formed!
+          nonNestedScoped(arm.body)(bd => returningTerm(bd, endSemi = true))
+        }${if needsBreak then doc" # break;" else ""} #} "
+      val bodWithDflt = doc"${switchBod}${dflt match
+        case Some(bd) => doc" # default: #{ ${nonBracedScoped(bd)(bd => returningTerm(bd, endSemi = true))} #} "
+        case None => doc""
+      }"
+      doc" # switch (${result(scrut)}) { #{ ${bodWithDflt} #}  # }" :: returningTerm(rest, endSemi)
+    case Match(scrut, arms @ hd :: tl, els, rest) =>
       val sd = result(scrut)
       def cond(cse: Case) = cse match
         case Case.Lit(lit) => doc"$sd === ${lit.idStr}"
@@ -598,13 +599,18 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
           doc"""typeof $sd === "object" && $sd !== null && "${n.name}" in $sd"""
         case Case.Field(name = n, safe = true) =>
           doc""""${n.name}" in $sd"""
-      val h = doc" # if (${ cond(hd._1) }) ${ braced(nonNestedScoped(hd._2)(res => returningTerm(res, endSemi = false))) }"
+      val h = doc" # if (${ cond(hd._1) }) ${ braced(nonBracedScoped(hd._2)(res => returningTerm(res, endSemi = false))) }"
       val t = tl.foldLeft(h)((acc, arm) =>
-        acc :: doc" else if (${ cond(arm._1) }) ${ braced(nonNestedScoped(arm._2)(res => returningTerm(res, endSemi = false))) }")
+        acc :: doc" else if (${ cond(arm._1) }) ${ braced(nonBracedScoped(arm._2)(res => returningTerm(res, endSemi = false))) }")
       val e = els match
         case S(End(_)) => doc""
+        case S(el) if arms.forall(_._2.isAbortive) =>
+          // * We print the `else` branch outside, after the `if` when all arms are abortive.
+          // * This typically results in slightly more concise code.
+          // * Not sure it's necessarily a good idea, though. (Does it affect the performance of the generated code?)
+          returningTerm(el, endSemi = true)
         case S(el) =>
-          doc" else ${ braced(nonNestedScoped(el)(res => returningTerm(res, endSemi = false))) }"
+          doc" else ${ braced(nonBracedScoped(el)(res => returningTerm(res, endSemi = false))) }"
         case N  => doc""
       t :: e :: returningTerm(rest, endSemi)
     
@@ -616,7 +622,8 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
     case End(_) => doc""
     
     case Unreachable(msg) if config.commentGeneratedCode =>
-      doc" # /* Unreachable: $msg */"
+      if msg.isEmpty then doc" # /* Unreachable */"
+      else doc" # /* Unreachable: $msg */"
     case Unreachable(_) => doc""
     
     case Throw(res) =>
@@ -634,7 +641,7 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
       // [fixme:0] TODO check scope and allocate local variables here (see: https://github.com/hkust-taco/mlscript/pull/293#issuecomment-2792229849)
       
       doc" # ${getVar(lbl, lbl.toLoc)}:${if loop then doc" while (true)" else ""} " :: braced {
-          nonNestedScoped(bod)(bd => returningTerm(bd, endSemi = true)) :: (if loop && !bod.isAbortive then doc" # break;" else doc"")
+          nonBracedScoped(bod)(bd => returningTerm(bd, endSemi = true)) :: (if loop && !bod.isAbortive then doc" # break;" else doc"")
       } :: returningTerm(rst, endSemi)
       
     case TryBlock(sub, fin, rst) =>
@@ -643,17 +650,10 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
       } # ${
         returningTerm(rst, endSemi).stripBreaks}"
 
-    // Only nested scopes will be handled here.
+    // Only nested scopes in unusual positions are handled here.
     case Scoped(syms, body) =>
       scope.nest.givenIn:
-        val vars = syms.toArray.sortBy(_.uid).iterator.flatMap: l =>
-          whenValidatingIR:
-            if scope.lookup(l).isDefined then // * It is invalid to shadow symbols in the IR
-              raise:
-                WarningReport(msg"var ${l.toString()} in scoped is already allocated" -> N :: Nil)
-          Some(l -> scope.allocateName(l))
-        braced:
-          genLetDecls(vars) :: returningTerm(body, endSemi)   
+        blockPreamble(syms.view.filter(body.freeVars)) :: returningTerm(body, endSemi = endSemi)
     
     // case _ => ???
   
@@ -749,11 +749,22 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
       :: doc";"
   
   def blockPreamble(ss: Iterable[Symbol])(using Raise, Scope): Document =
-    val vars = ss.toArray.sortBy(_.uid).iterator.map(l =>
-      l -> scope.allocateName(l))
+    val vars = ss.toArray.sortBy(_.uid).iterator.map: l =>
+      whenValidatingIR:
+        if scope.lookup(l).isDefined then // * It is invalid to shadow symbols in the IR
+          raise:
+            WarningReport(msg"var ${l.toString()} in scoped is already allocated" -> N :: Nil)
+      l -> scope.allocateName(l)
     genLetDecls(vars)
 
-  // Only handle non-nested Scoped nodes: we output the bindings, but do not add another pair of braces
+  /** Specially handle top-level Scoped node: output the bindings, but do not add another pair of braces */
+  def nonBracedScoped(blk: Block)(k: Scope ?=> Block => Document)(using Raise, Scope): Document = blk match
+    case Scoped(syms, body) =>
+      scope.nest.givenIn:
+        blockPreamble(syms.view.filter(body.freeVars)) :: k(body)
+    case _ => k(blk)
+  
+  /** Like `nonBracedScoped`, but not not create a nested scope – useful in fringe JS scenarios */
   def nonNestedScoped(blk: Block)(k: Block => Document)(using Raise, Scope): Document = blk match
     case Scoped(syms, body) =>
       blockPreamble(syms.view.filter(body.freeVars)) :: k(body)
@@ -763,8 +774,8 @@ class JSBuilder(using TL, State, Ctx, Config) extends CodeBuilder:
   def block(t: Block, endSemi: Bool)(using Raise, Scope): Document =
     returningTerm(t, endSemi)
   
-  def body(t: Block, endSemi: Bool)(using Raise, Scope): Document = scope.nest givenIn:
-    nonNestedScoped(t)(bd => block(bd, endSemi))
+  def body(t: Block, endSemi: Bool)(using Raise, Scope): Document =
+    nonBracedScoped(t)(bd => block(bd, endSemi))
   
   def defineProperty(target: Document, prop: Str, value: Document, enumerable: Bool = false): Document =
     doc"Object.defineProperty(${target}, ${prop.escaped}, ${

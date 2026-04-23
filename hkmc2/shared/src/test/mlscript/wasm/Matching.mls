@@ -46,18 +46,14 @@ if Bar(true) is
 //│   (type $Object (sub (struct (field $$tag (mut i32)))))
 //│   (type $Bar (sub $Object (struct (field $$tag (mut i32)) (field $y (mut (ref null any))))))
 //│   (type $Baz (sub $Object (struct (field $$tag (mut i32)) (field $z (mut (ref null any))))))
+//│   (type $Bar_init (func (param $this (ref null any)) (param $y (ref null any)) (result (ref null any))))
+//│   (type $Baz_init (func (param $this (ref null any)) (param $z (ref null any)) (result (ref null any))))
 //│   (type $Bar_ctor (func (param $y (ref null any)) (result (ref null any))))
 //│   (type $Baz_ctor (func (param $z (ref null any)) (result (ref null any))))
 //│   (type $entry1 (func (result (ref null any))))
-//│   (func $Bar_ctor (type $Bar_ctor) (param $y (ref null any)) (result (ref null any))
-//│     (local $this (ref null any))
+//│   (func $Bar_init (type $Bar_init) (param $this (ref null any)) (param $y (ref null any)) (result (ref null any))
 //│     (block (result (ref null any))
-//│       (local.set $this
-//│         (struct.new_default $Bar))
-//│       (struct.set $Bar $$tag
-//│         (ref.cast (ref $Bar)
-//│           (local.get $this))
-//│         (i32.const 1))
+//│       (nop)
 //│       (block
 //│         (struct.set $Bar $y
 //│           (ref.cast (ref $Bar)
@@ -66,17 +62,9 @@ if Bar(true) is
 //│         (nop))
 //│       (return
 //│         (local.get $this))))
-//│   (export "Bar_ctor" (func $Bar_ctor))
-//│   (elem declare func $Bar_ctor)
-//│   (func $Baz_ctor (type $Baz_ctor) (param $z (ref null any)) (result (ref null any))
-//│     (local $this (ref null any))
+//│   (func $Baz_init (type $Baz_init) (param $this (ref null any)) (param $z (ref null any)) (result (ref null any))
 //│     (block (result (ref null any))
-//│       (local.set $this
-//│         (struct.new_default $Baz))
-//│       (struct.set $Baz $$tag
-//│         (ref.cast (ref $Baz)
-//│           (local.get $this))
-//│         (i32.const 2))
+//│       (nop)
 //│       (block
 //│         (struct.set $Baz $z
 //│           (ref.cast (ref $Baz)
@@ -85,11 +73,37 @@ if Bar(true) is
 //│         (nop))
 //│       (return
 //│         (local.get $this))))
-//│   (export "Baz_ctor" (func $Baz_ctor))
-//│   (elem declare func $Baz_ctor)
-//│   (func $entry (type $entry1) (result (ref null any))
-//│     (local $Bar (ref null any))
-//│     (local $Baz (ref null any))
+//│   (func $Bar_ctor (export "Bar") (type $Bar_ctor) (param $y (ref null any)) (result (ref null any))
+//│     (local $this (ref null any))
+//│     (block (result (ref null any))
+//│       (local.set $this
+//│         (struct.new_default $Bar))
+//│       (struct.set $Bar $$tag
+//│         (ref.cast (ref $Bar)
+//│           (local.get $this))
+//│         (i32.const 1))
+//│       (drop
+//│         (call $Bar_init
+//│           (local.get $this)
+//│           (local.get $y)))
+//│       (return
+//│         (local.get $this))))
+//│   (func $Baz_ctor (export "Baz") (type $Baz_ctor) (param $z (ref null any)) (result (ref null any))
+//│     (local $this (ref null any))
+//│     (block (result (ref null any))
+//│       (local.set $this
+//│         (struct.new_default $Baz))
+//│       (struct.set $Baz $$tag
+//│         (ref.cast (ref $Baz)
+//│           (local.get $this))
+//│         (i32.const 2))
+//│       (drop
+//│         (call $Baz_init
+//│           (local.get $this)
+//│           (local.get $z)))
+//│       (return
+//│         (local.get $this))))
+//│   (func $entry (export "entry") (type $entry1) (result (ref null any))
 //│     (local $scrut (ref null any))
 //│     (local $a (ref null any))
 //│     (local $b (ref null any))
@@ -103,10 +117,9 @@ if Bar(true) is
 //│         (nop)
 //│         (block (result (ref null any))
 //│           (local.set $scrut
-//│             (call_ref $Bar_ctor
+//│             (call $Bar_ctor
 //│               (ref.i31
-//│                 (i32.const 1))
-//│               (ref.func $Bar_ctor)))
+//│                 (i32.const 1))))
 //│           (block (result (ref null any))
 //│             (block $match
 //│               (local.set $matchRes
@@ -122,7 +135,7 @@ if Bar(true) is
 //│                           (local.get $scrut)))
 //│                       (i32.const 1))
 //│                     (then
-//│                       (block $arm1
+//│                       (block $arm
 //│                         (local.set $matchRes
 //│                           (block (result (ref null any))
 //│                             (local.set $arg$Bar$0$
@@ -164,7 +177,7 @@ if Bar(true) is
 //│                           (local.get $scrut)))
 //│                       (i32.const 2))
 //│                     (then
-//│                       (block $arm2
+//│                       (block $arm
 //│                         (local.set $matchRes
 //│                           (block (result (ref null any))
 //│                             (local.set $arg$Baz$0$
@@ -180,33 +193,29 @@ if Bar(true) is
 //│                 (ref.i31
 //│                   (i32.const 2))))
 //│             (local.get $matchRes))))))
-//│   (export "entry" (func $entry))
-//│   (elem declare func $entry))
+//│   (elem $Bar_init declare func $Bar_init)
+//│   (elem $Baz_init declare func $Baz_init)
+//│   (elem $Bar_ctor declare func $Bar_ctor)
+//│   (elem $Baz_ctor declare func $Baz_ctor)
+//│   (elem $entry declare func $entry))
 //│ Wasm result:
 //│ = 3
 
-// TODO: change error to proper match error instance for missing else branch
 :re
-:w
 class Bar(val y)
 class Baz(val z)
 if Baz(10) is
   Bar(a) then 0
-//│ ═══[WARNING] WatBuilder::result for Instantiate(...) of `globalThis.Error(...)` with payload `Lit(StrLit(match error))` not implemented yet
 //│ Wasm result:
-//│ ═══[RUNTIME ERROR] 0
+//│ ═══[RUNTIME ERROR] match error
 
 :re
-:w
 if false then 1
-//│ ═══[WARNING] WatBuilder::result for Instantiate(...) of `globalThis.Error(...)` with payload `Lit(StrLit(match error))` not implemented yet
 //│ Wasm result:
-//│ ═══[RUNTIME ERROR] 0
+//│ ═══[RUNTIME ERROR] match error
 
-:w
 class Foo(val x, val y)
 if Foo(1,2) is Foo(a,b) then 0
-//│ ═══[WARNING] WatBuilder::result for Instantiate(...) of `globalThis.Error(...)` with payload `Lit(StrLit(match error))` not implemented yet
 //│ Wasm result:
 //│ = 0
 

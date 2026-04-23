@@ -95,6 +95,7 @@ declare class Bool
 declare class Int
 declare class Num
 declare class Str
+declare class Class
 
 // The `Array` class/function is a footgun:
 //    > Array()
@@ -272,6 +273,11 @@ declare module annotations with
 
 declare module scope with
   fun locally
+
+declare module runtime with
+  fun
+    suspend
+    handle_suspension
 
 
 // HTML DOM API definitions.

@@ -9,7 +9,7 @@ import mlscript.utils.*, shorthands.*
 import hkmc2.utils.*
 
 import hkmc2.Message.MessageContext
-import semantics.{FldFlags, TermDefFlags, Modulefulness}
+import semantics.{FldFlags, TermDefFlags, Modulefulness, ReflectionConstraint}
 import semantics.Elaborator.State
 import Tree._
 
@@ -107,6 +107,7 @@ enum Tree extends AutoLocated:
   case Outer(name: Opt[Tree])
   case Spread(kw: Keywrd[Keyword.Ellipsis], body: Opt[Tree])
   case Annotated(annotation: Tree, target: Tree)
+  case Directive(prefix: Tree, body: Tree)
   case Constructor(decl: Tree)
   /** Represents a term that has already been elaborated. When desugaring
    *  operator splits in the UCS, the `lhs` of `OpSplit` has already been elaborated
@@ -162,6 +163,7 @@ enum Tree extends AutoLocated:
     case Def(lhs, rhs) => Vector.double(lhs, rhs)
     case Spread(kw, body) => Vector.single(kw) ++ body.toVector
     case Annotated(annotation, target) => Vector.double(annotation, target)
+    case Directive(prefix, body) => Vector.double(prefix, body)
     case Constructor(decl) => Vector.single(decl)
     case MemberProj(cls, name) => Vector.single(cls)
     case Keywrd(kw) => Vector.empty
@@ -213,6 +215,7 @@ enum Tree extends AutoLocated:
     case Def(lhs, rhs) => "defining assignment"
     case Spread(_, _) => "spread"
     case Annotated(_, _) => "annotated"
+    case Directive(_, _) => "directive"
     case Open(_) => "open"
     case Constructor(_) => "constructor"
     case MemberProj(_, _) => "member projection"
@@ -256,6 +259,10 @@ enum Tree extends AutoLocated:
         case Modified(kw @ Keywrd(Keyword.`abstract`), s) =>
           Annotated(kw, s.desugared)
         case Modified(kw @ Keywrd(Keyword.`staged`), s) =>
+          Annotated(kw, s.desugared)
+        case Modified(kw @ Keywrd(Keyword.`public`), s) =>
+          Annotated(kw, s.desugared)
+        case Modified(kw @ Keywrd(Keyword.`private`), s) =>
           Annotated(kw, s.desugared)
         case Modified(kw @ Keywrd(Keyword.`mut`), TermDef(ImmutVal, anme, rhs)) =>
           TermDef(MutVal, anme, rhs).withLocOf(this).desugared
@@ -315,6 +322,20 @@ enum Tree extends AutoLocated:
       // fun f(using <...>)
       case TermDef(Ins, inner, N) =>
         go(inner, flags, modifiers + Ins)
+      // fun f(@dynamic <...>)
+      case Annotated(Ident("dynamic"), inner) =>
+        println(flags)
+        if flags.reflConstraint.isDefined then L:
+          ErrorReport:
+            msg"At most one reflection constraint can be added for each parameter." -> t.toLoc :: Nil
+        else go(inner, flags.copy(reflConstraint = S(ReflectionConstraint.Dynamic)), modifiers)
+      // fun f(@static <...>)
+      case Annotated(Ident("static"), inner) =>
+        println(flags)
+        if flags.reflConstraint.isDefined then L:
+          ErrorReport:
+            msg"At most one reflection constraint can be added for each parameter." -> t.toLoc :: Nil
+        else go(inner, flags.copy(reflConstraint = S(ReflectionConstraint.Static)), modifiers)
       
       // * Base Case (for `using` clause)
       // fun f(using A)
@@ -433,7 +454,6 @@ case object ImmutVal extends Val("val", "value")
 case object MutVal extends Val("mut val", "mutable value")
 case object LetBind extends ValLike("let", "let binding")
 case object HandlerBind extends TermDefKind("handler", "handler binding")
-case object ParamBind extends ValLike("", "parameter")
 case object Fun extends TermDefKind("fun", "function")
 case object Ins extends TermDefKind("using", "implicit instance")
 sealed abstract class TypeDefKind(str: Str, desc: Str)(using Line) extends DeclKind(str, desc)
@@ -569,14 +589,16 @@ trait TypeDefImpl(using State) extends TypeOrTermDef:
     case _ =>
       Map.empty
   
-  lazy val clsParams: Ls[TermSymbol] =
-    this.paramLists.headOption.fold(Nil): tup =>
+  lazy val clsParams: Ls[Ls[TermSymbol]] =
+    this.paramLists.map: tup =>
       val pts = tup.fields
       val inUsing = pts.headOption.exists(_.isModified(Ins))
-      pts.flatMap(_.asParam(inUsing = inUsing).toOption).map:
-        case ParamTree(spd = S(_)) => lastWords("spreads are not allowed in class parameters")
-        case ParamTree(ident = id) => TermSymbol(ParamBind, symbol.asClsLike, id)
+      pts.flatMap(_.desugared.asParam(inUsing = inUsing).toOption).map:
+        // case ParamTree(spd = S(_)) => lastWords("spreads are not allowed in class parameters") // TODO: properly report this in Elaborator
+        case pt @ ParamTree(ident = id) =>
+          val k = if pt.flags.mut then MutVal else ImmutVal
+          TermSymbol(k, symbol.asClsLike, id)
       .toList
     
-  lazy val allSymbols = definedSymbols ++ clsParams.map(s => s.nme -> s).toMap
+  lazy val allSymbols = definedSymbols ++ clsParams.flatten.map(s => s.nme -> s).toMap
 

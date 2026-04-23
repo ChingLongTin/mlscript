@@ -1,7 +1,7 @@
 :js
 
 :ssjs
-class Foo(x)
+class Foo(val x)
 //│ —————————————| JS (sanitized) |—————————————————————————————————————————————————————————————————————
 //│ let Foo1;
 //│ Foo1 = function Foo(x) {
@@ -11,17 +11,17 @@ class Foo(x)
 //│   static {
 //│     Foo1.class = this
 //│   }
-//│   constructor(x) {}
-//│   #x;
+//│   constructor(x) {
+//│     this.x = x;
+//│   }
 //│   toString() { return runtime.render(this); }
-//│   static [definitionMetadata] = ["class", "Foo", [null]]; 
+//│   static [definitionMetadata] = ["class", "Foo", ["x"]]; 
 //│ });
-//│ block$res1 = undefined;
 //│ —————————————————| Output |—————————————————————————————————————————————————————————————————————————
 
 :ssjs
 :noFreeze
-class Foo(x)
+class Foo(val x)
 //│ —————————————| JS (sanitized) |—————————————————————————————————————————————————————————————————————
 //│ let Foo3;
 //│ Foo3 = function Foo(x) {
@@ -31,12 +31,12 @@ class Foo(x)
 //│   static {
 //│     Foo3.class = this
 //│   }
-//│   constructor(x) {}
-//│   #x;
+//│   constructor(x) {
+//│     this.x = x;
+//│   }
 //│   toString() { return runtime.render(this); }
-//│   static [definitionMetadata] = ["class", "Foo", [null]]; 
+//│   static [definitionMetadata] = ["class", "Foo", ["x"]]; 
 //│ });
-//│ block$res2 = undefined;
 //│ —————————————————| Output |—————————————————————————————————————————————————————————————————————————
 
 
@@ -44,16 +44,33 @@ class Foo(x)
 let foo = new Foo(1)
 //│ —————————————| JS (sanitized) |—————————————————————————————————————————————————————————————————————
 //│ let foo;
-//│ foo = globalThis.Object.freeze(new Foo3.class(1)); block$res3 = undefined;
+//│ foo = globalThis.Object.freeze(new Foo3.class(1));
 //│ —————————————————| Output |—————————————————————————————————————————————————————————————————————————
-//│ foo = Foo(_)
+//│ foo = Foo(1)
 
 :ssjs
 :noFreeze
 let foo = new Foo(1)
 //│ —————————————| JS (sanitized) |—————————————————————————————————————————————————————————————————————
 //│ let foo1;
-//│ foo1 = (new Foo3.class(1)); block$res4 = undefined;
+//│ foo1 = (new Foo3.class(1));
 //│ —————————————————| Output |—————————————————————————————————————————————————————————————————————————
-//│ foo = Foo(_)
+//│ foo = Foo(1)
 
+
+set foo.x = 42
+
+:expect 42
+foo.x
+//│ = 42
+
+import "../../mlscript-compile/NoFreeze.mls"
+
+let foo = NoFreeze.foo()
+//│ foo = Foo(0)
+
+set foo.x = 42
+
+:expect 42
+foo.x
+//│ = 42

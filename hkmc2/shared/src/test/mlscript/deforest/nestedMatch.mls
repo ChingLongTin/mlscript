@@ -1,8 +1,6 @@
 :js
 :deforest
 
-//│ deforest > >>> fusing >>>
-//│ deforest > <<< fusing <<<
 object A
 object B
 object C
@@ -234,7 +232,7 @@ c(AA(2), y)
 //│ deforest > 	Ref(y,None)
 //│ deforest > <<< fusing <<<
 //│ = 4
-//│ y = fun y
+//│ y = fun y7
 
 
 :expect 9
@@ -550,7 +548,7 @@ test(p) + f(p)
 //│ deforest > 	Select(Ref(tmp:arg$AA$0$,None),Ident(x))
 //│ deforest > <<< fusing <<<
 //│ = 15
-//│ p = AA(AA(fun tmp101))
+//│ p = AA(AA(fun tmp114))
 
 
 :expect "()()"
@@ -596,12 +594,12 @@ sum(prodDouble(4))
 //│ deforest > >>> fusing >>>
 //│ deforest > Call(Ref(member:Cons,Some(term:Cons/Cons)),List(Arg(None,Ref(n,None)), Arg(None,Ref(tmp:tmp,None)))) ->
 //│ deforest > 	Ref(ls,None)
-//│ deforest > 	Select(Ref(ls,None),Ident(t))
 //│ deforest > 	Select(Ref(ls,None),Ident(h))
+//│ deforest > 	Select(Ref(ls,None),Ident(t))
 //│ deforest > Call(Ref(member:Cons,Some(term:Cons/Cons)),List(Arg(None,Ref(n,None)), Arg(None,Ref(tmp:tmp,None)))) ->
 //│ deforest > 	Ref(ls,None)
-//│ deforest > 	Select(Ref(ls,None),Ident(t))
 //│ deforest > 	Select(Ref(ls,None),Ident(h))
+//│ deforest > 	Select(Ref(ls,None),Ident(t))
 //│ deforest > Ref(member:Nil,Some(object:Nil)) ->
 //│ deforest > 	Ref(ls,None)
 //│ deforest > <<< fusing <<<

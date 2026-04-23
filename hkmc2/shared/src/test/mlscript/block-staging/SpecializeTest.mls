@@ -1,0 +1,30 @@
+:js
+:staging
+:noModuleCheck
+
+import "../../mlscript-compile/ShapeSet.mls"
+
+open ShapeSet
+
+staged module M with
+  fun f(x) =
+    let y = x * 2
+    y
+  fun f_gen
+
+M.f_gen(mkDyn())
+//│ = ["f", {Dyn()}]
+
+
+M.f_gen(mkLit(2))
+//│ = ["f_Lit2", {Lit(4)}]
+
+
+print(M."cache$M")
+//│ > module M with
+//│ >   ()
+//│ >   fun f(x) =
+//│ >     let {y}
+//│ >     y = *(x, 2)
+//│ >     y
+//│ >   fun f_Lit2(x) = 4

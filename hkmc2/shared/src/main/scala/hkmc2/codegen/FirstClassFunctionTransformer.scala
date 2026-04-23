@@ -26,16 +26,18 @@ class FirstClassFunctionTransformer(using Elaborator.State, Elaborator.Ctx, Rais
     )
     val defSym = new BlockMemberSymbol("Function$", Nil, false)
     val callDef = FunDefn.withFreshSymbol(Some(clsSym), new BlockMemberSymbol("call", Nil, true), params :: Nil,
-      Return(Call(p, params.params.map(_.sym.asPath.asArg))(true, false, false), false))(false)
+      Return(Call(p, params.params.map(_.sym.asPath.asArg))(true, false, false), false))(false, N, Visibility.Public)
     ClsLikeDefn(None, clsSym, defSym, None, syntax.Cls, None, Nil,
       Some(Select(Value.Ref(State.globalThisSymbol, Some(State.globalThisSymbol)), Tree.Ident("Function"))(Some(ctx.builtins.Function))),
-      callDef :: Nil, Nil, Nil, Return(Call(Value.Ref(State.builtinOpsMap("super")), Nil)(false, false, false), true), End(), None, None)
+      callDef :: Nil, Nil, Nil, Return(Call(Value.Ref(State.builtinOpsMap("super")), Nil)(false, false, false), true), End(), None, None)(N)
 
   private def getParamList(l: BlockMemberSymbol): Option[ParamList] = funDefns.get(l) match
-    case Some(fd) => fd.params.headOption
+    case Some(fd) => fd.params.headOption.map(pl =>
+      ParamList(pl.flags, pl.params.map(p => Param(p.flags, VarSymbol(p.sym.id), p.sign, p.modulefulness)), pl.restParam))
     case _ => l.tsym.flatMap(getParamList)
 
-  private def getParamList(ts: TermSymbol): Option[ParamList] = ts.defn.flatMap(_.params.headOption)
+  private def getParamList(ts: TermSymbol): Option[ParamList] = ts.defn.flatMap(_.params.headOption).map(pl =>
+    ParamList(pl.flags, pl.params.map(p => Param(p.flags, VarSymbol(p.sym.id), p.sign, p.modulefulness)), pl.restParam))
 
   override def applyPath(p: Path)(k: Path => Block): Block = p match
     case ref @ Value.Ref(l: BlockMemberSymbol, disamb) => disamb match
@@ -99,12 +101,27 @@ class FirstClassFunctionTransformer(using Elaborator.State, Elaborator.Ctx, Rais
           case head :: rest =>
             val newBody = rec(rest)
             val funSym = new BlockMemberSymbol("lambda$", Nil, false)
-            val funDef = FunDefn.withFreshSymbol(None, funSym, head :: Nil, newBody)(false)
+            val funDef = FunDefn.withFreshSymbol(None, funSym, head :: Nil, newBody)(false, N, Visibility.Public)
             Scoped(Set(funSym), Define(funDef, Return(Value.Ref(funDef.sym, Some(funDef.dSym)), false)))
           case Nil => fd.body
-        FunDefn.withFreshSymbol(fd.owner, fd.sym, head :: Nil, rec(tail))(fd.forceTailRec)
+        FunDefn.withFreshSymbol(fd.owner, fd.sym, head :: Nil, rec(tail))(fd.forceTailRec, fd.configOverride, fd.visibility)
 
   def transform(b: Block): Block =
     val desugared = new DesugarMultipleParamList().applyBlock(b)
     new CollectFunDefns().applyBlock(desugared)
-    applyBlock(desugared)
+    new LabelTransformer().applyBlock(applyBlock(desugared))
+
+
+class LabelTransformer(using State, Raise) extends BlockTransformer(new SymbolSubst()):
+  private val contMap = HashMap.empty[Symbol, Symbol]
+
+  override def applyBlock(b: Block): Block = b match
+    case Label(label, false, body, rest) =>
+      val contSym = BlockMemberSymbol("cont$", Nil, false)
+      val contFun = FunDefn.withFreshSymbol(N, contSym, PlainParamList(Nil) :: Nil, rest)(false, N, Visibility.Public)
+      contMap.addOne(label -> contSym)
+      super.applyBlock(Scoped(Set(contSym), Define(contFun, body)))
+    case Break(label) => contMap.get(label) match
+      case Some(sym: Symbol) => Return(Call(Value.Ref(sym, N), Nil)(true, false, false), true)
+      case _ => super.applyBlock(b)
+    case _ => super.applyBlock(b)

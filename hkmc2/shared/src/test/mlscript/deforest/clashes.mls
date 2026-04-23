@@ -1,8 +1,6 @@
 :js
 :deforest
 
-//│ deforest > >>> fusing >>>
-//│ deforest > <<< fusing <<<
 
 data class A(x)
 //│ deforest > >>> fusing >>>
@@ -49,7 +47,7 @@ f1(one) + f2(one) + f2(two)
 //│ deforest > <<< fusing <<<
 //│ = 9
 //│ one = A(1)
-//│ two = fun
+//│ two = fun inlinedVal1
 
 
 

@@ -211,6 +211,9 @@ object Elaborator:
         val bufferable = assumeObject("bufferable")
       object scope extends VirtualModule(assumeBuiltinMod("scope")):
         val locally = assumeObject("locally")
+      object runtime extends VirtualModule(assumeBuiltinMod("runtime")):
+        val suspend = assumeObject("suspend")
+        val handle_suspension = assumeObject("handle_suspension")
       def getBuiltinOp(op: Str): Opt[Str] =
         if getBuiltin(op).isDefined then builtinBinOps.get(op) else N
       /** Classes that do not use `instanceof` in pattern matching. */
@@ -252,6 +255,8 @@ object Elaborator:
     given State = this
     val globalThisSymbol = TopLevelSymbol("globalThis")
     val unitSymbol = ModuleOrObjectSymbol(DummyTypeDef(syntax.Obj), Ident("Unit"))
+    // Stable symbol for the synthetic Wasm Unit singleton
+    val unitBlockMemberSymbol = BlockMemberSymbol("Unit", Nil)
     val loopEndSymbol = ModuleOrObjectSymbol(DummyTypeDef(syntax.Obj), Ident("LoopEnd"))
     val tupleSymbol = ModuleOrObjectSymbol(DummyTypeDef(syntax.Mod), Ident("Tuple"))
     val strSymbol = ModuleOrObjectSymbol(DummyTypeDef(syntax.Mod), Ident("Str"))
@@ -376,7 +381,17 @@ extends Importer with ucs.SplitElaborator:
     case _ => N
   
   def annot(tree: Tree): Ctxl[Opt[Annot]] = tree match
-    case Keywrd(kw @ (Keyword.`abstract` | Keyword.`declare` | Keyword.`data` | Keyword.`staged`)) => S(Annot.Modifier(kw))
+    case Keywrd(kw @ (
+      Keyword.`abstract`
+      | Keyword.`declare`
+      | Keyword.`data`
+      | Keyword.`staged`
+      | Keyword.`public`
+      | Keyword.`private`
+    )) => S(Annot.Modifier(kw))
+    case App(Ident("config"), Tup(args)) =>
+      val modify = ConfigParser.parseOverrides(args)
+      S(Annot.Config(modify))
     case _ => term(tree) match
       case Term.Error => N
       case trm =>
@@ -579,17 +594,7 @@ extends Importer with ucs.SplitElaborator:
         PlainFld(subterm(rhs, inAppPrefix = true)) :: Nil)(DummyTup))(DummyApp, N, FlowSymbol("not-app"))
     case tree @ InfixApp(lhs, Keywrd(Keyword.`is` | Keyword.`and` | Keyword.`or`), rhs) =>
       Term.IfLike(Keyword.`if`, IfLikeForm.ReturningIf, shorthandSplit(tree))
-    case InfixApp(lhs, kw, rhs) =>
-      raise:
-        ErrorReport(msg"Unexpected infix use of keyword '${kw.name}' here" -> tree.toLoc :: Nil)
-      Term.Error
-    case OpApp(lhs, Ident("|"), rhs :: Nil) =>
-      Term.CompType(subterm(lhs), subterm(rhs), true)
-    case OpApp(lhs, Ident("&"), rhs :: Nil) =>
-      Term.CompType(subterm(lhs), subterm(rhs), false)
-    case OpApp(lhs, Ident(":="),rhs :: Nil) =>
-      Term.SetRef(subterm(lhs), subterm(rhs))
-    case OpApp(Sel(pre, idn: Ident), Ident("#"), (idp: Ident) :: Nil) =>
+    case InfixApp(Sel(pre, idn: Ident), Keywrd(Keyword.`#`), idp: Ident) =>
       val c = subterm(idn)
       val f = c.symbol.flatMap(_.asCls) match
         case S(cls: ClassSymbol) =>
@@ -602,8 +607,16 @@ extends Importer with ucs.SplitElaborator:
           raise(ErrorReport(msg"Identifier `${idn.name}` does not name a known class symbol." -> idn.toLoc :: Nil))
           N
       Term.SelProj(subterm(pre), c, idp)(f, FlowSymbol.selProj(idp.name), N, S(summon))
-    case App(Ident("#"), Tup(Sel(pre, Ident(name)) :: App(Ident(proj), args) :: Nil)) =>
-      subterm(App(App(Ident("#"), Tup(Sel(pre, Ident(name)) :: Ident(proj) :: Nil)), args))
+    case InfixApp(lhs, kw, rhs) =>
+      raise:
+        ErrorReport(msg"Unexpected infix use of keyword '${kw.name}' here" -> tree.toLoc :: Nil)
+      Term.Error
+    case OpApp(lhs, Ident("|"), rhs :: Nil) =>
+      Term.CompType(subterm(lhs), subterm(rhs), true)
+    case OpApp(lhs, Ident("&"), rhs :: Nil) =>
+      Term.CompType(subterm(lhs), subterm(rhs), false)
+    case OpApp(lhs, Ident(":="),rhs :: Nil) =>
+      Term.SetRef(subterm(lhs), subterm(rhs))
     case App(Ident("!"), Tup(rhs :: Nil)) =>
       Term.Deref(subterm(rhs))
     case App(Ident("~"), Tup(rhs :: Nil)) =>
@@ -1298,8 +1311,13 @@ extends Importer with ucs.SplitElaborator:
           res
         
         def withFields(using Ctx)(fn: (Ctx) ?=> (Term.Blk, Ctx)): (Term.Blk, Ctx) =
-          val fields: Ls[Statement] = pss.flatMap: ps =>
-            ps.params.flatMap: p =>
+          softAssert(pss.sizeCompare(td.clsParams) === 0,
+            s"mismatched parameter list numbers ${pss} vs ${td.clsParams}")
+          val fields: Ls[Statement] = pss.zip(td.clsParams).flatMap: (ps, cps) =>
+            // TODO: handle this gracefully (could be caused by erroneous input code)
+            softTODO(ps.params.sizeCompare(cps) === 0,
+              s"mismatched param list lengths ${ps.params} vs ${cps}")
+            ps.params.zip(cps).flatMap: (p, cp) =>
               // For class-like types, "desugar" the parameters into additional class fields.
               
               val owner = td.symbol match
@@ -1312,7 +1330,8 @@ extends Importer with ucs.SplitElaborator:
               then
                 val k = if p.flags.mut then MutVal else ImmutVal
                 val fsym = BlockMemberSymbol(p.sym.nme, Nil)
-                val tsym = TermSymbol(k, owner, p.sym.id) // TODO?
+                val tsym = cp
+                cp.decl = S(p)
                 val fdef = TermDefinition(
                   k,
                   fsym,
@@ -1388,9 +1407,9 @@ extends Importer with ucs.SplitElaborator:
             val allParams = ps.fold(Nil):
               _.params.flatMap:
                 // Only `pat` flag is `true`.
-                case p @ Param(flags = FldFlags(false, false, true, false)) => S(p)
+                case p @ Param(flags = FldFlags(N, false, false, true, false)) => S(p)
                 // All flags are `false`.
-                case p @ Param(flags = FldFlags(false, false, false, false)) => S(p)
+                case p @ Param(flags = FldFlags(N, false, false, false, false)) => S(p)
                 case Param(flags, sym, _, _) =>
                   raise(ErrorReport(msg"Unexpected pattern parameter ${sym.name} with modifiers: ${flags.show}" -> sym.toLoc :: Nil))
                   N
@@ -1412,11 +1431,15 @@ extends Importer with ucs.SplitElaborator:
             // Note that the remaining variables have not been bound to any
             // `VarSymbol` yet. Thus, we need to pair them with the extraction
             // parameters. We only report warnings for unbound variables
-            // because they are harmless.
+            // because they are harmless. Variables used in guard conditions
+            // (from `where` clauses) are not considered useless.
+            val guardedNames = pat.varNamesUsedInGuards
             pat.variables.varMap.foreach: (name, aliases) =>
               extractionParams.find(_.sym.name == name) match
                 case S(param) => aliases.foreach(_.symbol = param.sym)
-                case N => raise(WarningReport(msg"Useless pattern binding: $name." -> aliases.head.toLoc :: Nil))
+                case N if !guardedNames.contains(name) =>
+                  raise(WarningReport(msg"Unused pattern binding: $name." -> aliases.head.toLoc :: Nil))
+                case _ => ()
             scoped("ucs:ups")(log(s"elaborated pattern body: ${pat.showDbg}"))
             scoped("ucs:ups:tree")(log(s"elaborated pattern body: ${pat.showAsTree}"))
             // `paramsOpt` is set to `N` because we don't want parameters to
@@ -1477,6 +1500,24 @@ extends Importer with ucs.SplitElaborator:
         go(sts, Nil, defn :: acc)
       case Annotated(annotation, target) :: sts =>
         go(target :: sts, annotations ++ annot(annotation), acc)
+      // * With tight right precedence, `#config(args)` is parsed as `App(Directive(config, Tup()), Tup(args))`.
+      // * Reconstruct as `Directive(config, Tup(args))` and re-process.
+      case App(Directive(prefix, _), args) :: sts =>
+        go(Directive(prefix, args) :: sts, annotations, acc)
+      case Directive(Ident("config"), Tup(args)) :: sts =>
+        reportUnusedAnnotations
+        val modify = ConfigParser.parseOverrides(args)
+        go(sts, Nil, SetConfig(modify) :: acc)
+      case Directive(Ident(name), _) :: sts =>
+        raise(ErrorReport(
+          msg"Unknown directive '#${name}'" -> sts.headOption.flatMap(_.toLoc) :: Nil,
+          source = Diagnostic.Source.Compilation))
+        go(sts, annotations, acc)
+      case (dir @ Directive(prefix, _)) :: sts =>
+        raise(ErrorReport(
+          msg"Expected a directive name after '#', but found ${prefix.describe}" -> prefix.toLoc :: Nil,
+          source = Diagnostic.Source.Compilation))
+        go(sts, annotations, acc)
       case (st: Tree) :: sts =>
         // TODO reject plain term statements? Currently, `(1, 2)` is allowed to elaborate (tho it should be rejected in type checking later)
         val res = annotations.foldLeft(term(st)):
@@ -1918,4 +1959,3 @@ end Elaborator
 
 type Pol = Opt[Bool]
 extension (p: Pol) def ! : Pol = p.map(!_)
-

@@ -1,103 +1,42 @@
 :js
 :staging
 
+import "../../mlscript-compile/Block.mls"
+
+// TODO: copy C# annotation to Block IR
+class C with
+  fun call(x) = x + 1
+staged module M with
+  fun f(x) = x.C#call(10)
+
 staged class A(val a)
-//│ > fun ctor_(a) =
-//│ >   A1.a = a
-//│ > Map(1) { 'ctor$' => [Function: ctor$_gen] }
-//│ > Map(1) {
-//│ >   [Function: A] {
-//│ >     class: [class A] { 'cache$A': [FunCache], 'generatorMap$A': [Map] }
-//│ >   } => ClassSymbol {
-//│ >     name: 'A1',
-//│ >     value: [Function: A] { class: [Function] },
-//│ >     moduleValue: 0,
-//│ >     paramsOpt: Some { value: [Array] },
-//│ >     auxParams: []
-//│ >   }
-//│ > }
 
 staged module C with
   class I
-//│ > Map(1) { 'ctor$' => [Function: ctor$_gen] }
-//│ > Map(1) {
-//│ >   [class I] { Symbol(mlscript.definitionMetadata): [ 'class', 'I' ] } => ClassSymbol {
-//│ >     name: 'I',
-//│ >     value: [class I] { Symbol(mlscript.definitionMetadata): [Array] },
-//│ >     moduleValue: 0,
-//│ >     paramsOpt: None {},
-//│ >     auxParams: []
-//│ >   }
-//│ > }
 
-// :sjs
 class C
 staged module M with
   fun f() = C
-//│ > Map(2) { 'ctor$' => [Function: ctor$_gen], 'f' => [Function: f_gen] }
-//│ > Map(1) {
-//│ >   [class C2] { Symbol(mlscript.definitionMetadata): [ 'class', 'C' ] } => ClassSymbol {
-//│ >     name: 'C',
-//│ >     value: [class C2] { Symbol(mlscript.definitionMetadata): [Array] },
-//│ >     moduleValue: 0,
-//│ >     paramsOpt: None {},
-//│ >     auxParams: []
-//│ >   }
-//│ > }
 
-// :sir
 staged class C with
   fun f() = 1
-//│ > Map(2) { 'ctor$' => [Function: ctor$_gen], 'f' => [Function: f_gen] }
 
 :e
 staged class C(x)
 //│ ╔══[COMPILATION ERROR] Staged classes with private fields are not supported.
-//│ ║  l.188: 	staged class C(x)
-//│ ╙──       	       ^^^^^^^^^^
+//│ ║  l.25: 	staged class C(x)
+//│ ╙──      	       ^^^^^^^^^^
 
 staged class B(val x) with
   fun f(y) = this.x + y
 staged class D(val x) extends B(x+1) with
   val y = 1
   fun f() = 42
-//│ > Map(2) { 'ctor$' => [Function: ctor$_gen], 'f' => [Function: f_gen] }
-//│ > Map(1) {
-//│ >   [Function: B] {
-//│ >     class: [class B] { 'cache$B': [FunCache], 'generatorMap$B': [Map] }
-//│ >   } => ClassSymbol {
-//│ >     name: 'B1',
-//│ >     value: [Function: B] { class: [Function] },
-//│ >     moduleValue: 0,
-//│ >     paramsOpt: Some { value: [Array] },
-//│ >     auxParams: []
-//│ >   }
-//│ > }
-//│ > Map(2) { 'ctor$' => [Function: ctor$_gen], 'f' => [Function: f_gen] }
-//│ > Map(2) {
-//│ >   [Function: B] {
-//│ >     class: [class B] {
-//│ >       'cache$B': [FunCache],
-//│ >       'generatorMap$B': [Map],
-//│ >       Symbol(mlscript.definitionMetadata): [Array]
-//│ >     }
-//│ >   } => ClassSymbol {
-//│ >     name: 'B1',
-//│ >     value: [Function: B] { class: [Function] },
-//│ >     moduleValue: 0,
-//│ >     paramsOpt: Some { value: [Array] },
-//│ >     auxParams: []
-//│ >   },
-//│ >   [Function: D] {
-//│ >     class: [class D extends B] {
-//│ >       'cache$D': [FunCache],
-//│ >       'generatorMap$D': [Map]
-//│ >     }
-//│ >   } => ClassSymbol {
-//│ >     name: 'D1',
-//│ >     value: [Function: D] { class: [Function] },
-//│ >     moduleValue: 0,
-//│ >     paramsOpt: Some { value: [Array] },
-//│ >     auxParams: []
-//│ >   }
-//│ > }
+
+class Unstaged
+staged class Staged(val x) with
+ fun inner() = 1
+staged module M with
+  fun f() =
+    Unstaged;
+    Staged

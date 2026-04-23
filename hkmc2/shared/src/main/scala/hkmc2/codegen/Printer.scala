@@ -17,7 +17,7 @@ import hkmc2.document.Document.{braced, bracedbk}
 
 /** `SymbolPrinter` is used for printing symbols that are not locally bound, so that they are consistent
   * with the debug-printed names shown in other parts of the compiler, such as showAsTreee. */
-class Printer(using Raise, ShowCfg, SymbolPrinter):
+class Printer(using Raise, ShowCfg, SymbolPrinter, Config):
   
   val showPurity =
     false
@@ -36,7 +36,7 @@ class Printer(using Raise, ShowCfg, SymbolPrinter):
         case Case.Lit(lit) => doc"${lit.idStr}"
         case Case.Cls(cls, path) => doc"${print(cls)}"
         case Case.Tup(len, inf) => doc"Array($len${if inf then "+" else ""})"
-        case _ => TODO(c)
+        case Case.Field(name, safe) => doc"${if safe then "" else "Object "}{ ${name.name} }"
       val docCases = arms
         .map{ case (c, b) => doc"${case_doc(c)} => #{  # ${print(b)} #} " }
         .mkDocument(sep = doc" # ")
@@ -53,7 +53,7 @@ class Printer(using Raise, ShowCfg, SymbolPrinter):
     case Continue(label) =>
       doc"continue ${print(label)}"
     case Begin(sub, rest) =>
-      doc"begin #{  # ${print(sub)}; # ${print(rest)} #} "
+      doc"begin #{  # ${print(sub)}; #}  # ${print(rest)}"
     case TryBlock(sub, finallyDo, rest) =>
       doc"try #{  # ${print(sub)} #  #} finally #  #{ ${print(finallyDo)}; #  #} ${print(rest)}"
     case Assign(_: NoSymbol, rhs, rest) =>
@@ -62,6 +62,8 @@ class Printer(using Raise, ShowCfg, SymbolPrinter):
       doc"set ${print(lhs)} = ${print(rhs)}; # ${print(rest)}"
     case AssignField(lhs, nme, rhs, rest) =>
       doc"set ${print(lhs)}.${nme.name} = ${print(rhs)}; # ${print(rest)}"
+    case AssignDynField(lhs, fld, arrayIdx, rhs, rest) =>
+      doc"set ${print(lhs)}${if arrayIdx then "." else "!"}${print(fld)} = ${print(rhs)}; # ${print(rest)}"
     case Define(defn, rest) =>
       doc"define ${print(defn.sym)} as ${print(defn)}; # ${print(rest)}"
     case Scoped(syms, body) =>
@@ -69,15 +71,16 @@ class Printer(using Raise, ShowCfg, SymbolPrinter):
         import hkmc2.given_Ordering_Uid // Not sure why needed...
         val names = syms.toList.sortBy(_.uid).map(s => scope.allocateName(s))
         doc"let ${names.mkDocument(", ")}; # ${print(body)}"
-    case End("") => doc"end"
-    case End(msg) => doc"end /* ${msg} */"
+    case End(msg) if msg.nonEmpty && config.commentGeneratedCode => doc"end /* ${msg} */"
+    case End(_) => doc"end"
     case Unreachable(msg) => doc"unreachable /* ${msg} */"
     case _ => TODO(blk)
   
   def print(
-      privateFields: List[TermSymbol],
-      publicFields: List[(BlockMemberSymbol, TermSymbol)],
-      methods: List[FunDefn],
+      privateFields: Ls[TermSymbol],
+      publicFields: Ls[(BlockMemberSymbol, TermSymbol)],
+      methods: Ls[FunDefn],
+      auxParams: Ls[ParamList],
       preCtor: Opt[Block],
       ctor: Block,
       ctorSym: Opt[TermSymbol],
@@ -92,7 +95,7 @@ class Printer(using Raise, ShowCfg, SymbolPrinter):
       case None => doc""
     val docCtor = ctor match
       case End(_) => doc""
-      case _ => doc" # constructor${ctorSym.fold(doc"")(doc" " :: print(_))} ${
+      case _ => doc" # constructor${ctorSym.fold(doc"")(doc" " :: print(_))}${printParamLists(auxParams)} ${
         bracedbk(docPreCtor :: print(ctor))}"
     val mtds = methods.map(m => doc"method ${print(m.sym)} = " :: print(m)).mkDocument(sep = doc" # ")
     val docMethods = if methods.isEmpty then doc"" else doc" # ${mtds}"
@@ -104,11 +107,19 @@ class Printer(using Raise, ShowCfg, SymbolPrinter):
     then doc""
     else doc" " :: braced(doc"${docPrivFlds}${docPubFlds}${docCtor}${docMethods}")
   
+  def printParamLists(paramss: Ls[ParamList])(using Scope): Document =
+    paramss
+      .map: pl =>
+        val allParams =
+          pl.params.map(x => scope.allocateName(x.sym)) ++
+          pl.restParam.map(x => "..." + scope.allocateName(x.sym))
+        allParams.mkDocument("(", ", ", ")")
+      .mkDocument("")
+  
   def print(defn: Defn)(using Scope): Document = defn match
-    case FunDefn(own, sym, dSym, params, body) =>
+    case FunDefn(own, sym, dSym, paramss, body) =>
       scope.nest.givenIn:
-        val docParams = doc"${
-          params.map(_.params.map(x => scope.allocateName(x.sym)).mkDocument("(", ", ", ")")).mkDocument("")}"
+        val docParams = printParamLists(paramss)
         val docBody = print(body)
         doc"fun ${print(dSym)}${docParams} ${bracedbk(docBody)}"
     case ValDefn(tsym, sym, rhs) =>
@@ -116,18 +127,15 @@ class Printer(using Raise, ShowCfg, SymbolPrinter):
     case ClsLikeDefn(own, isym, sym, ctorSym, k, paramsOpt, auxParams, parentSym, methods,
         privateFields, publicFields, preCtor, ctor, mod, bufferable)
     => scope.nest.givenIn:
-      val clsParams = paramsOpt.fold(Nil)(_.paramSyms)
-      val auxClsParams = auxParams.flatMap(_.paramSyms)
-      val ctorParams = (clsParams ++ auxClsParams).map(p => scope.allocateName(p))
-      val docCtorParams = if clsParams.isEmpty then doc"" else doc"(${ctorParams.mkDocument(", ")})"
+      val ctorParams = printParamLists(paramsOpt.toList)
       val docStaged = if isym.defn.forall(_.hasStagedModifier.isEmpty) then doc"" else doc"staged "
-      val docBody = print(privateFields, publicFields, methods, S(preCtor), ctor, ctorSym)
+      val docBody = print(privateFields, publicFields, methods, auxParams, S(preCtor), ctor, ctorSym)
       val clsType = k.str
-      val docCls = doc"${docStaged}${clsType} ${print(isym)}${docCtorParams}${docBody}"
+      val docCls = doc"${docStaged}${clsType} ${print(isym)}${ctorParams}${docBody}"
       val docModule = mod match
         case Some(mod) =>
           val docStaged = if mod.isym.defn.forall(_.hasStagedModifier.isEmpty) then doc"" else doc"staged "
-          val docBody = print(mod.privateFields, mod.publicFields, mod.methods, N, mod.ctor, N)
+          val docBody = print(mod.privateFields, mod.publicFields, mod.methods, Nil, N, mod.ctor, N)
           doc" # ${docStaged}module ${print(mod.isym)}${docBody}"
         case None => doc""
       doc"${docCls}${docModule}"
@@ -143,6 +151,7 @@ class Printer(using Raise, ShowCfg, SymbolPrinter):
       else doc
 
   def print(value: Value)(using Scope): Document = value match
+    case Value.Ref(l: InnerSymbol, N) => doc"${print(l)}.this"
     case Value.Ref(l, N) => print(l)
     case Value.Ref(l, disamb) => showSymbol(l.nme, disamb)
     case Value.This(sym) => doc"this"
@@ -165,8 +174,11 @@ class Printer(using Raise, ShowCfg, SymbolPrinter):
       doc"new ${if mut then "mut " else ""}${print(cls)}(${args.map(print).mkDocument(", ")})"
     case Lambda(params, body) =>
       scope.nest.givenIn:
-        val docParams = params.params.map(x => scope.allocateName(x.sym)).mkDocument(", ")
-        doc"(${docParams}) => ${print(body)}"
+        val allParams =
+          params.params.map(x => scope.allocateName(x.sym)) ++
+          params.restParam.map(x => "..." + scope.allocateName(x.sym))
+        val docParams = allParams.mkDocument("(", ", ", ")")
+        doc"$docParams => ${bracedbk(print(body))}"
     case Tuple(mut, elems) =>
       val docElems = elems.map(x => print(x)).mkDocument(", ")
       doc"${if mut then "mut " else ""}[${docElems}]"

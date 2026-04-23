@@ -1,0 +1,22 @@
+:js
+:staging
+
+staged module TempVariable with
+  fun f(x, x) =
+    let x
+    let x
+    x
+
+staged module DupeFunctionName with
+  fun f() = 1
+
+class C(val x)
+
+staged module Selection with
+  fun f(x) =
+    x.call()
+    C(1).x is Bool
+
+staged module DupeClass with
+  class C(val y)
+  fun f() = C(1).y

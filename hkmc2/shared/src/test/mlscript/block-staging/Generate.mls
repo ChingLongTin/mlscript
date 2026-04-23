@@ -1,12 +1,13 @@
 :js
+:staging
 :noModuleCheck
-
 
 import "../../mlscript-compile/staging/SimpleStagedExample.mls"
 
 
-SimpleStagedExample."generate"("./hkmc2/shared/src/test/mlscript-compile/staging/out/SimpleStagedExample.mls")
+SimpleStagedExample."generate"("../SimpleStagedExample.mls", "./hkmc2/shared/src/test/mlscript-compile/staging/out/SimpleStagedExample.mls")
 
+// console.log(SimpleStagedExample."cache$SimpleStagedExample".toString())
 
 import "../../mlscript-compile/staging/out/SimpleStagedExample.mls"
 
@@ -19,7 +20,26 @@ SimpleStagedExample.foo()
 SimpleStagedExample.f(1, 5)
 //│ = 6
 
-
 :expect 5
 SimpleStagedExample.fib(5)
 //│ = 5
+
+
+SimpleStagedExample.baz()
+//│ = 2
+
+
+import "../../mlscript-compile/staging/LinkingGeneratedClasses.mls"
+
+
+LinkingGeneratedClasses."generate"("../LinkingGeneratedClasses.mls", "./hkmc2/shared/src/test/mlscript-compile/staging/out/LinkingGeneratedClasses.mls")
+
+import "../../mlscript-compile/staging/out/LinkingGeneratedClasses.mls"
+
+:fixme
+LinkingGeneratedClasses.test1
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
+
+LinkingGeneratedClasses.test2
+//│ = D
+
