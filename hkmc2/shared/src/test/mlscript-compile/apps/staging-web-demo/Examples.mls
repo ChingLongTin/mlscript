@@ -17,3 +17,30 @@ examples |> MutMap.insert of
   fun square(x) = pow(x, 2)
   fun cube(x) = pow(x, 3)
 """
+
+examples |> MutMap.insert of
+  "Folding.mls"
+  name: "Fold"
+  source: """staged module Folding with
+  fun sq(x) = x * x
+  fun fib(n) = if n is 
+    1 then 1
+    2 then 1
+    n then fib(n - 1) + fib(n - 2)
+  fun f(x, y) = x + y + 1 - 1
+  fun test(x) =
+    fib(f(2, 3)) + sq(3) + sq(x)
+"""
+
+examples |> MutMap.insert of
+  "Branch.mls"
+  name: "Branch"
+  source: """class C(val x)
+staged module TestIf with
+  fun f(x) = if x is
+    C(2) then "wrong1"
+    2 then "correct"
+    else "wrong2"
+  fun test() = 
+    f(2)
+"""
