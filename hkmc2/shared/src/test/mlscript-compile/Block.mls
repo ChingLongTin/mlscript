@@ -3,10 +3,10 @@ import "./Option.mls"
 import "./StrOps.mls"
 import "./Runtime.mls"
 
-// import "fs"
-// import "process"
-// import "path"
-// import "url"
+import "fs"
+import "process"
+import "path"
+import "url"
 
 open Predef
 open StrOps
@@ -240,8 +240,8 @@ class Printer(val owner: Opt[Class]) with
 module Printer with
   val default = Printer(None)
 
-fun genMod(name, methods) =
-  "module " + name + " with" + indent("\n" + methods.map(showDefn).join("\n"))
+// fun genMod(name, methods) =
+//   "module " + name + " with" + indent("\n" + methods.map(showDefn).join("\n"))
 
 // TODO: move to another file!
 fun codegen(name, methods, file) = ()
