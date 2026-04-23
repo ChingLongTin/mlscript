@@ -1,0 +1,7 @@
+import "../StagedClass.mjs"
+class StagedClass1(x) with
+    ()
+    fun f(y, z) =
+      let {tmp1}
+      tmp1 = x + y
+      tmp1 + z

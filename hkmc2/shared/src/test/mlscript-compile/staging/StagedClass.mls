@@ -1,0 +1,6 @@
+staged class StagedClass(val x) with
+  fun f(y, z) = x + y + z
+
+staged module StagedClass with
+  val one = new StagedClass(1)
+  class Test

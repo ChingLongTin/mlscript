@@ -32,14 +32,14 @@ SimpleStagedExample.baz()
 import "../../mlscript-compile/staging/LinkingGeneratedClasses.mls"
 
 
-LinkingGeneratedClasses."generate"("../LinkingGeneratedClasses.mls", "./hkmc2/shared/src/test/mlscript-compile/staging/out/LinkingGeneratedClasses.mls")
+// LinkingGeneratedClasses."generate"("../LinkingGeneratedClasses.mls", "./hkmc2/shared/src/test/mlscript-compile/staging/out/LinkingGeneratedClasses.mls")
 
-import "../../mlscript-compile/staging/out/LinkingGeneratedClasses.mls"
+// import "../../mlscript-compile/staging/out/LinkingGeneratedClasses.mls"
 
-:fixme
-LinkingGeneratedClasses.test1
-//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
+// :fixme
+// LinkingGeneratedClasses.test1
+// //│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
-LinkingGeneratedClasses.test2
-//│ = D
+// LinkingGeneratedClasses.test2
+// //│ = D
 

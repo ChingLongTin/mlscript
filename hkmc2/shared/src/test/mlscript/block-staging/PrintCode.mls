@@ -55,7 +55,7 @@ printCode(f)
 printCode(ClsLikeDefn(dSym, [f], []))
 printCode(ClsLikeDefn(bSym, [], []))
 //│ > fun f(x) = 1
-//│ > class D(x)(y) with
+//│ > class D(val x)(y) with
 //│ >   fun f(x) = 1
 //│ > class B
 

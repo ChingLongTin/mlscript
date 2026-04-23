@@ -54,6 +54,13 @@ staged module A
 //│     set tmp5 = Block⁰.FunDefn﹖(sym, tmp4, end);
 //│     return tmp5
 //│   }
+//│   method show⁰ = fun show¹() {
+//│     let tmp_dyn, tmp3, tmp4;
+//│     set tmp_dyn = ShapeSet⁰.mkDyn﹖();
+//│     set tmp3 = A².this.cache$A﹖.dump﹖();
+//│     set tmp4 = Block⁰.genMod﹖("A", tmp3);
+//│     return tmp4
+//│   }
 //│   method propagate⁰ = fun propagate¹() { let tmp_dyn; set tmp_dyn = ShapeSet⁰.mkDyn﹖(); end }
 //│ };
 //│ end
@@ -68,8 +75,8 @@ fun g(@static x) = x
 :e
 fun h(@dynamic @static x) = x
 //│ ╔══[COMPILATION ERROR] At most one reflection constraint can be added for each parameter.
-//│ ║  l.69: 	fun h(@dynamic @static x) = x
+//│ ║  l.76: 	fun h(@dynamic @static x) = x
 //│ ╙──      	               ^^^^^^^^^
 //│ ╔══[COMPILATION ERROR] Name not found: x
-//│ ║  l.69: 	fun h(@dynamic @static x) = x
+//│ ║  l.76: 	fun h(@dynamic @static x) = x
 //│ ╙──      	                            ^

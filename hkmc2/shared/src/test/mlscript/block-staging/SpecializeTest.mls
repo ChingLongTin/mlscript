@@ -25,6 +25,6 @@ print(M."cache$M")
 //│ >   ()
 //│ >   fun f(x) =
 //│ >     let {y}
-//│ >     y = *(x, 2)
+//│ >     y = x * 2
 //│ >     y
 //│ >   fun f_Lit2(x) = 4

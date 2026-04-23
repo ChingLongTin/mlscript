@@ -65,7 +65,7 @@ print(Simple."cache$Simple")
 //│ >   fun test2(n) =
 //│ >     let {dyn, tmp10}
 //│ >     dyn = pyth_Dyn_Lit2(n, 2)
-//│ >     tmp10 = *(dyn, 2)
+//│ >     tmp10 = dyn * 2
 //│ >     fib(tmp10)
 
 class C(val x)
@@ -138,7 +138,7 @@ print(LinearAlgebra."cache$LinearAlgebra")
 //│ >     let {scrut, tmp, tmp1, tmp2}
 //│ >     scrut = false
 //│ >     tmp = 1
-//│ >     tmp1 = *(v1.(n), 3)
+//│ >     tmp1 = v1.(n) * 3
 //│ >     tmp2 = tmp1 + 0
 //│ >     _dot_Arr_Dyn_Lit1_Lit2_end_Arr_Lit3_Lit4_Lit1_end_Lit1_Dyn(v1, v2, tmp, tmp2)
 //│ >   fun _dot_Arr_Dyn_Lit1_Lit2_end_Arr_Lit3_Lit4_Lit1_end_Lit1_Dyn(v1, v2, n, acc) =
@@ -254,7 +254,7 @@ print(L3.class."class$cache$L3")
 //│ >   fun call_L3_Lit3_dot_Lit5(x) = 13
 //│ >   fun call_L3_Lit3_dot_Union_Lit7_Lit13_end(x) =
 //│ >     let {tmp1}
-//│ >     tmp1 = *(x, 2)
+//│ >     tmp1 = x * 2
 //│ >     tmp1 + 3
 
 staged class A(val x: Int) with

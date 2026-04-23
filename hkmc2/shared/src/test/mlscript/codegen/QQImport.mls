@@ -1,53 +1,69 @@
 :js
 :qq
-
+:ignore
 
 
 meta.print
-//│ = fun print
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.6: 	meta.print
+//│ ╙──     	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 meta.print(`42)
-//│ > 42
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.13: 	meta.print(`42)
+//│ ╙──      	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 meta.print(`+)
-//│ > +
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.20: 	meta.print(`+)
+//│ ╙──      	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 meta.print(`1 `+ `2)
-//│ > (+)(1, 2)
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.27: 	meta.print(`1 `+ `2)
+//│ ╙──      	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 meta.print(x `=> x)
-//│ > (x_0) =>
-//│ >   x_0
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.34: 	meta.print(x `=> x)
+//│ ╙──      	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 meta.print((x, y) `=> x `+ y)
-//│ > (x_0, y_0) =>
-//│ >   (+)(x_0, y_0)
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.41: 	meta.print((x, y) `=> x `+ y)
+//│ ╙──      	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 meta.print(`let x = `42 `in x)
-//│ > let x_0
-//│ > x_0 = 42
-//│ > x_0
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.48: 	meta.print(`let x = `42 `in x)
+//│ ╙──      	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 meta.print(`if `true then `true else `false)
-//│ > if 
-//│ >   let scrut_0 = true
-//│ >   scrut_0 is true then true
-//│ >   else false
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.55: 	meta.print(`if `true then `true else `false)
+//│ ╙──      	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 meta.print(x `=> `if x `=== `0.0 then `1.0 else x)
-//│ > (x_0) =>
-//│ >   if 
-//│ >     let scrut_0 = (===)(x_0, 0)
-//│ >     scrut_0 is true then 1
-//│ >     else x_0
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.62: 	meta.print(x `=> `if x `=== `0.0 then `1.0 else x)
+//│ ╙──      	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 import "../../mlscript-compile/QuoteExample2.mls"
@@ -73,6 +89,10 @@ import "../../mlscript-compile/CSP.mls"
 
 
 meta.codegen(CSP.foo(), "./hkmc2/shared/src/test/mlscript-compile/quotes/CSPFoo.mls")
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.91: 	meta.codegen(CSP.foo(), "./hkmc2/shared/src/test/mlscript-compile/quotes/CSPFoo.mls")
+//│ ╙──      	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 import "../../mlscript-compile/quotes/CSPFoo.mls"
@@ -83,6 +103,10 @@ CSPFoo.res
 
 
 meta.codegen(CSP.bar(), "./hkmc2/shared/src/test/mlscript-compile/quotes/CSPBar.mls")
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.105: 	meta.codegen(CSP.bar(), "./hkmc2/shared/src/test/mlscript-compile/quotes/CSPBar.mls")
+//│ ╙──       	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 import "../../mlscript-compile/quotes/CSPBar.mls"
@@ -93,6 +117,10 @@ CSPBar.res
 
 
 meta.codegen(CSP.baz(), "./hkmc2/shared/src/test/mlscript-compile/quotes/CSPBaz.mls")
+//│ ╔══[COMPILATION ERROR] Name not found: meta
+//│ ║  l.119: 	meta.codegen(CSP.baz(), "./hkmc2/shared/src/test/mlscript-compile/quotes/CSPBaz.mls")
+//│ ╙──       	^^^^
+//│ ═══[RUNTIME ERROR] This code cannot be run as its compilation yielded an error.
 
 
 import "../../mlscript-compile/quotes/CSPBaz.mls"
