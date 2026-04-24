@@ -11,6 +11,7 @@
 // Or we can use Live Server extension (or its alternatives) in VSCode to
 // automatically refresh the browser.
 
+#config(noFreeze: true) // avoid freezing to call the global regexp multiple times
 
 import "../../StrOps.mls"
 import "../../Iter.mls"
@@ -45,7 +46,7 @@ let outputPanel = query("#specialized-code")
 let runnerEditor = query("#runner-editor")
 let runnerOutput = query("#runner-output")
 let runStatus = query("#run-status")
-let topLevelModulePattern = new RegExp("""^\s*(?:staged\s+)?module\s+([A-Za-z_][A-Za-z0-9_]*)\s+with\b""", "m")
+let stagedNamesPattern = new RegExp("""^\s*(?:staged\s+)?(module|class)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\([^()]+\))*\s+with\b""", "gm")
 // TODO: do not skip staged 
 
 let specializedCode = ""
@@ -80,28 +81,24 @@ fun formatError(error) =
   error.name + ": " + error.message +
   if error.stack is Str then "\n" + error.stack else ""
 
-fun topLevelModuleName(source) =
-  let matched = topLevelModulePattern.exec(source)
-  if matched is null then None else Some(matched.[1])
-
-fun currentTopLevelModuleName() =
-  topLevelModuleName(editor.value)
-
 parseButton.addEventListener of "click", event =>
   set outputPanel.textContent = "Compiling..."
   Runtime.try_catch of
     () =>
-      let moduleName =
-        if currentTopLevelModuleName() is
-          Some(name) then name
-          None then
-            set statusPanel.textContent = "No staged module found."
-            ""
+      let statements = []
+      while
+        let match = stagedNamesPattern.exec(editor.value)
+        not (match is null) do
+          if match.(1) is
+            "module" then statements.push(match.(2) + ".show()")
+            "class" then statements.push(match.(2) + ".\"class\".show()")
+      console.log(statements)
+      if statements.length is 0 then set statusPanel.textContent = "No staged module found." else ()
       let begin = globalThis.performance.now()
       let res = MLscript.compile of
         traces:
           codegen: false
-        editor.value + "\n" + moduleName + ".show()"
+        editor.value + "\n" + "[" + statements.join(", ") + "].join(\"\\n\")"
       let sections = mut []
       let generatedVars = res.codegen.vars.trim()
       let generatedCode = res.codegen.code.trim()
