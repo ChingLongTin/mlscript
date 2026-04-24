@@ -4,10 +4,10 @@
 
 import "../../mlscript-compile/staging/SimpleStagedExample.mls"
 import "../../mlscript-compile/staging/Transform3D.mls"
-import "../../mlscript-compile/Block.mls"
+import "../../mlscript-compile/BlockGenerator.mls"
 
-
-Block.generateAll("CombinedModule", "./hkmc2/shared/src/test/mlscript-compile/staging/out/CombinedModule.mls", [SimpleStagedExample, "SimpleStagedExample", "../SimpleStagedExample.mls"], [Transform3D, "Transform3D", "../Transform3D.mls"])
+// TODO: replace Transform3D with LinkingGeneratedClasses after fixing the reference problems
+BlockGenerator.generateAll("CombinedModule", "./hkmc2/shared/src/test/mlscript-compile/staging/out/CombinedModule.mls", [SimpleStagedExample, "SimpleStagedExample", "../SimpleStagedExample.mls"], [Transform3D, "Transform3D", "../Transform3D.mls"])
 
 
 import "../../mlscript-compile/staging/out/CombinedModule.mls"

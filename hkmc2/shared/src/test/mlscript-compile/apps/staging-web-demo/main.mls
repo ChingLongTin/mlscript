@@ -25,7 +25,7 @@ import "../../Shape.mls"
 import "../../ShapeSet.mls"
 import "../../SpecializeHelpers.mls"
 import "./Examples.mls"
-import "../../../../../../js/target/scala-3.7.4/hkmc2-opt/MLscript.mjs"
+import "../../../../../../js/target/scala-3.8.3/hkmc2-opt/MLscript.mjs"
 
 
 open XML { elem }
@@ -153,7 +153,7 @@ runButton.addEventListener of "click", event =>
           if generatedVars != "" && generatedCode != "" then generatedVars + "\n\n" + generatedCode
           else generatedVars + generatedCode
         console.log(compiledCode)
-        let result = globalThis.eval(compiledCode.replaceAll("runtime", "Runtime")) // FIXME
+        let result = globalThis.eval(compiledCode.replaceAll("runtime", "Runtime").replaceAll("option", "Option")) // FIXME
         // console.log(result)
         set runnerOutput.textContent = result
         set runStatus.textContent = "Run succeeded. The return value is shown below."

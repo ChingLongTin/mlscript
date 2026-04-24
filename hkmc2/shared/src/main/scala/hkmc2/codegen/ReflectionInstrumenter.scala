@@ -472,8 +472,7 @@ class ReflectionInstrumenter(using State, Raise, Ctx) extends BlockTransformer(S
               ((args, k) => call(_, args, true, "gen_call")(k))
               (genPath)
           )
-        callGenCont(call(cachePath.selSN("dump"), Nil, false)(mthds => 
-          call(blockMod("genMod"), toValue(modSym.nme) :: mthds :: Nil, true, "tmp")(p => Return(p, false))))
+        callGenCont(call(cachePath.selSN("toString"), Nil, false)(p => Return(p, false)))
 
     val webdemoEntryFunDef =
         val sym = BlockMemberSymbol("show", Nil)

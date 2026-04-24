@@ -233,7 +233,7 @@ build of
   //   "" // Email
   None
 //│ > Processing src/test/mlscript-compile/apps/staging-web-demo/main.mjs
-//│ > Processing ../js/target/scala-3.7.4/hkmc2-opt/MLscript.mjs
+//│ > Processing ../js/target/scala-3.8.3/hkmc2-opt/MLscript.mjs
 //│ > Processing src/test/mlscript-compile/apps/staging-web-demo/Examples.mjs
 //│ > Processing src/test/mlscript-compile/SpecializeHelpers.mjs
 //│ > Processing src/test/mlscript-compile/ShapeSet.mjs
@@ -253,7 +253,7 @@ build of
 //│ > Processing src/test/mlscript-compile/StrOps.mjs
 //│ > Processing src/test/mlscript-compile/Runtime.mjs
 //│ > Collected 19 files
-//│ > There are 21 files in the output folder.
+//│ > There are 23 files in the output folder.
 //│ > Removing Block.mjs
 //│ > Removing CachedHash.mjs
 //│ > Removing Examples.mjs
@@ -275,3 +275,4 @@ build of
 //│ > Removing index.css
 //│ > Removing index.html
 //│ > Removing main.mjs
+
