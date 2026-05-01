@@ -21,27 +21,25 @@ let SpecializeHelpers1;
     SpecializeHelpers.#classGenMapPrefix = "class$generatorMap$";
     SpecializeHelpers.#moduleCachePrefix = "cache$";
     SpecializeHelpers.#classCachePrefix = "class$cache$";
-    this.Ctx = function Ctx(ctx, valueNameCtx, valDefnCtx, allocs, thisShape) {
-      return globalThis.Object.freeze(new Ctx.class(ctx, valueNameCtx, valDefnCtx, allocs, thisShape));
+    this.Ctx = function Ctx(ctx, valDefnCtx, allocs, thisShape) {
+      return globalThis.Object.freeze(new Ctx.class(ctx, valDefnCtx, allocs, thisShape));
     };
     (class Ctx {
       static {
         SpecializeHelpers.Ctx.class = this
       }
-      constructor(ctx, valueNameCtx, valDefnCtx, allocs, thisShape) {
+      constructor(ctx, valDefnCtx, allocs, thisShape) {
         this.ctx = ctx;
-        this.valueNameCtx = valueNameCtx;
         this.valDefnCtx = valDefnCtx;
         this.allocs = allocs;
         this.thisShape = thisShape;
       }
       static empty() {
-        let tmp, tmp1, tmp2, tmp3;
+        let tmp, tmp1, tmp2;
         tmp = globalThis.Object.freeze(new globalThis.Map());
         tmp1 = globalThis.Object.freeze(new globalThis.Map());
-        tmp2 = globalThis.Object.freeze(new globalThis.Map());
-        tmp3 = [];
-        return SpecializeHelpers.Ctx(tmp, tmp1, tmp2, tmp3, Option.None)
+        tmp2 = [];
+        return SpecializeHelpers.Ctx(tmp, tmp1, tmp2, Option.None)
       }
       get(path) {
         let ps, scrut, tmp;
@@ -66,41 +64,12 @@ let SpecializeHelpers1;
         let tmp, tmp1;
         tmp = globalThis.Object.freeze(new globalThis.Map(this.ctx));
         tmp1 = globalThis.Object.freeze(new globalThis.Map(this.valDefnCtx));
-        return SpecializeHelpers.Ctx(tmp, this.valueNameCtx, tmp1, this.allocs, this.thisShape);
+        return SpecializeHelpers.Ctx(tmp, tmp1, this.allocs, this.thisShape);
       } 
       get clearCtx() {
         let tmp;
         tmp = globalThis.Object.freeze(new globalThis.Map());
-        return SpecializeHelpers.Ctx(tmp, this.valueNameCtx, this.valDefnCtx, this.allocs, this.thisShape);
-      } 
-      sub(other) {
-        let res, lambda;
-        res = globalThis.Object.freeze(new globalThis.Map());
-        lambda = (undefined, function (ss, ps, _) {
-          let scrut, scrut1, tmp;
-          tmp = runtime.safeCall(ss.isEmpty());
-          scrut = ! tmp;
-          if (scrut === true) {
-            let ps1, inlinedVal, scrut2, tmp1;
-            ps1 = ps;
-            scrut2 = runtime.safeCall(other.ctx.has(ps1));
-            if (scrut2 === true) {
-              tmp1 = runtime.safeCall(other.ctx.get(ps1));
-              inlinedVal = runtime.safeCall(tmp1.isEmpty());
-            } else {
-              inlinedVal = false;
-            }
-            scrut1 = inlinedVal;
-            if (scrut1 === true) {
-              res.set(ps, ss);
-              return runtime.Unit
-            }
-            return runtime.Unit;
-          }
-          return runtime.Unit;
-        });
-        runtime.safeCall(this.ctx.forEach(lambda));
-        return res
+        return SpecializeHelpers.Ctx(tmp, this.valDefnCtx, this.allocs, this.thisShape);
       } 
       add(path, ss) {
         let ps, scrut, tmp, tmp1;
@@ -108,7 +77,7 @@ let SpecializeHelpers1;
         scrut = runtime.safeCall(this.ctx.has(ps));
         if (scrut === true) {
           tmp = runtime.safeCall(this.ctx.get(ps));
-          tmp1 = ShapeSet.union2(tmp, ss);
+          tmp1 = ShapeSet.union(tmp, ss);
           this.ctx.set(ps, tmp1);
           return this
         }
@@ -120,7 +89,7 @@ let SpecializeHelpers1;
         return this
       }
       toString() { return runtime.render(this); }
-      static [definitionMetadata] = ["class", "Ctx", ["ctx", "valueNameCtx", "valDefnCtx", "allocs", "thisShape"]]; 
+      static [definitionMetadata] = ["class", "Ctx", ["ctx", "valDefnCtx", "allocs", "thisShape"]]; 
     });
     this.FunCache = function FunCache(owner, cache) {
       return globalThis.Object.freeze(new FunCache.class(owner, cache));
@@ -378,7 +347,7 @@ let SpecializeHelpers1;
             tmp5 = inlineAssigments(tmp4);
             tmp6 = runtime.safeCall(tmp5(preCtor));
           } else {
-            tmp6 = runtime.assertFail("mlscript-compile/SpecializeHelpers.mls", "146");
+            tmp6 = runtime.assertFail("mlscript-compile/SpecializeHelpers.mls", "131");
           }
           tmp7 = tmp6;
         } else {
@@ -434,7 +403,7 @@ let SpecializeHelpers1;
           tmp29 = Block.indent(tmp28);
           return tmp22 + tmp29
         }
-        return runtime.assertFail("mlscript-compile/SpecializeHelpers.mls", "160");
+        return runtime.assertFail("mlscript-compile/SpecializeHelpers.mls", "145");
       }
       [prettyPrint]() { return this.toString(); }
       static [definitionMetadata] = ["class", "FunCache", ["owner", "cache"]]; 
@@ -452,32 +421,6 @@ let SpecializeHelpers1;
       }
       toString() { return runtime.render(this); }
       static [definitionMetadata] = ["class", "SplitResult", ["knownMap", "unkShape"]]; 
-    });
-    this.ValueCollection = function ValueCollection(defn) {
-      return globalThis.Object.freeze(new ValueCollection.class(defn));
-    };
-    (class ValueCollection extends Block.Printer.class {
-      static {
-        SpecializeHelpers.ValueCollection.class = this
-      }
-      constructor(defn) {
-        super(Option.None);
-        this.#defn = defn;
-      }
-      #defn;
-      showSymbol(s) {
-        let tmp;
-        split_root$: {
-          if (s instanceof Block.ConcreteClassSymbol.class) {} else if (s instanceof Block.ModuleSymbol.class) {} else {
-            break split_root$
-          }
-          tmp = SpecializeHelpers.getActualClass(s.value);
-          this.#defn.set(tmp, s);
-        }
-        return ""
-      }
-      toString() { return runtime.render(this); }
-      static [definitionMetadata] = ["class", "ValueCollection", [null]]; 
     });
   }
   static sorInstantiate_sorCall_sor_prop_specializeCtor(id, param0, param1, param2, param3, param4) {
@@ -539,68 +482,57 @@ let SpecializeHelpers1;
             tmp6
           ]);
         case 1:
-          let scrut2, litArg, recovered, p, scrut3, arr, e, arr2, scrut4, clsSymb1, clsSymb2, scrut5, cache1, scrut6, res1, symb2, name, redir, fld, value, mapPropName, genMap, scrut7, f_gen, scrut8, res2, scrut9, v2p, scrut10, f_imp, evaluated, evaluated_path, arg$Select$0$, arg$Select$1$1, arg$ValueRef$0$1, arg$ModuleSymbol$0$, arg$ModuleSymbol$1$, arg$ModuleSymbol$2$, arg$Symbol$0$, arg$ValueRef$0$2, arg$Select$0$1, arg$Select$1$2, arg$ValueRef$0$3, arg$Symbol$0$1, arg$ModuleSymbol$0$1, arg$Symbol$0$2, element1$, element0$, arg$Arg$0$, arg$Arg$0$1, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20, tmp21, tmp22, tmp23, tmp24, tmp25, tmp26, tmp27, tmp28, tmp29, tmp30, tmp31, element0$1, arg$Arr$0$, element0$2, element0$3, arg$Arr$0$1, tmp32, tmp33, tmp34, tmp35, tmp36, tmp37, tmp38, tmp39;
+          let scrut2, litArg, recovered, clsSymb1, p, scrut3, arr, e, arr2, scrut4, clsSymb2, scrut5, cache1, scrut6, res1, symb2, name, fld, value, mapPropName, genMap, scrut7, f_gen, scrut8, res2, scrut9, v2p, scrut10, f_imp, evaluated, evaluated_path, arg$Select$0$, arg$Select$1$1, arg$ValueRef$0$1, arg$ModuleSymbol$0$, arg$ModuleSymbol$1$, arg$Symbol$0$, arg$ValueRef$0$2, arg$Select$0$1, arg$Select$1$2, arg$ValueRef$0$3, arg$Symbol$0$1, arg$ModuleSymbol$0$1, arg$Symbol$0$2, element1$, element0$, arg$Arg$0$, arg$Arg$0$1, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20, tmp21, tmp22, tmp23, tmp24, tmp25, tmp26, tmp27, tmp28, tmp29, tmp30, tmp31, element0$1, arg$Arr$0$, element0$2, element0$3, arg$Arr$0$1, tmp32, tmp33, tmp34, tmp35, tmp36, tmp37, tmp38, tmp39;
           split_1$: {
             split_2$: {
-              split_3$: {
-                if (param2 instanceof Block.Select.class) {
-                  arg$Select$0$ = param2.qual;
-                  arg$Select$1$1 = param2.name;
-                  if (arg$Select$0$ instanceof Block.Select.class) {
-                    arg$Select$0$1 = arg$Select$0$.qual;
-                    arg$Select$1$2 = arg$Select$0$.name;
-                    if (arg$Select$0$1 instanceof Block.ValueRef.class) {
-                      arg$ValueRef$0$3 = arg$Select$0$1.l;
-                      if (arg$ValueRef$0$3 instanceof Block.Symbol.class) {
-                        arg$Symbol$0$1 = arg$ValueRef$0$3.name;
-                        if (arg$Symbol$0$1 === "runtime") {
-                          if (arg$Select$1$2 instanceof Block.Symbol.class) {
-                            arg$Symbol$0$2 = arg$Select$1$2.name;
-                            if (arg$Symbol$0$2 === "Tuple") {
-                              if (arg$Select$1$1 instanceof Block.Symbol.class) {
-                                arg$Symbol$0$ = arg$Select$1$1.name;
-                                switch (arg$Symbol$0$) {
-                                  case "get":
-                                    if (runtime.Tuple.isArrayLike(param3) && param3.length === 2) {
-                                      element0$ = runtime.Tuple.get(param3, 0);
-                                      element1$ = runtime.Tuple.get(param3, 1);
-                                      if (element0$ instanceof Block.Arg.class) {
-                                        arg$Arg$0$ = element0$.value;
-                                        if (element1$ instanceof Block.Arg.class) {
-                                          arg$Arg$0$1 = element1$.value;
-                                          litArg = arg$Arg$0$1;
-                                          scrut2 = arg$Arg$0$;
-                                          recovered = Block.DynSelect(scrut2, litArg, false);
-                                          tmp7 = Block.End();
-                                          tmp8 = SpecializeHelpers.sop(param0, recovered);
-                                          return globalThis.Object.freeze([
-                                            tmp7,
-                                            recovered,
-                                            tmp8
-                                          ])
-                                        }
-                                        break split_1$;
+              if (param2 instanceof Block.Select.class) {
+                arg$Select$0$ = param2.qual;
+                arg$Select$1$1 = param2.name;
+                if (arg$Select$0$ instanceof Block.Select.class) {
+                  arg$Select$0$1 = arg$Select$0$.qual;
+                  arg$Select$1$2 = arg$Select$0$.name;
+                  if (arg$Select$0$1 instanceof Block.ValueRef.class) {
+                    arg$ValueRef$0$3 = arg$Select$0$1.l;
+                    if (arg$ValueRef$0$3 instanceof Block.Symbol.class) {
+                      arg$Symbol$0$1 = arg$ValueRef$0$3.name;
+                      if (arg$Symbol$0$1 === "runtime") {
+                        if (arg$Select$1$2 instanceof Block.Symbol.class) {
+                          arg$Symbol$0$2 = arg$Select$1$2.name;
+                          if (arg$Symbol$0$2 === "Tuple") {
+                            if (arg$Select$1$1 instanceof Block.Symbol.class) {
+                              arg$Symbol$0$ = arg$Select$1$1.name;
+                              switch (arg$Symbol$0$) {
+                                case "get":
+                                  if (runtime.Tuple.isArrayLike(param3) && param3.length === 2) {
+                                    element0$ = runtime.Tuple.get(param3, 0);
+                                    element1$ = runtime.Tuple.get(param3, 1);
+                                    if (element0$ instanceof Block.Arg.class) {
+                                      arg$Arg$0$ = element0$.value;
+                                      if (element1$ instanceof Block.Arg.class) {
+                                        arg$Arg$0$1 = element1$.value;
+                                        litArg = arg$Arg$0$1;
+                                        scrut2 = arg$Arg$0$;
+                                        recovered = Block.DynSelect(scrut2, litArg, false);
+                                        tmp7 = Block.End();
+                                        tmp8 = SpecializeHelpers.sop(param0, recovered);
+                                        return globalThis.Object.freeze([
+                                          tmp7,
+                                          recovered,
+                                          tmp8
+                                        ])
                                       }
                                       break split_1$;
                                     }
                                     break split_1$;
-                                  case "slice":
-                                    throw runtime.safeCall(globalThis.Error("runtime.Tuple.slice not handled in shape propagation"));
-                                  case "concat":
-                                    p = arg$Select$0$;
-                                    break split_2$;
-                                }
-                                break split_1$
+                                  }
+                                  break split_1$;
+                                case "slice":
+                                  throw runtime.safeCall(globalThis.Error("runtime.Tuple.slice not handled in shape propagation"));
+                                case "concat":
+                                  p = arg$Select$0$;
+                                  break split_2$;
                               }
-                              break split_1$;
-                            }
-                            if (arg$Select$1$1 instanceof Block.Symbol.class) {
-                              arg$Symbol$0$ = arg$Select$1$1.name;
-                              if (arg$Symbol$0$ === "concat") {
-                                p = arg$Select$0$;
-                                break split_2$
-                              }
-                              break split_1$;
+                              break split_1$
                             }
                             break split_1$;
                           }
@@ -620,20 +552,27 @@ let SpecializeHelpers1;
                             p = arg$Select$0$;
                             break split_2$
                           }
-                          if (arg$Symbol$0$1 === "globalThis") {
-                            if (arg$Select$1$2 instanceof Block.ModuleSymbol.class) {
-                              arg$ModuleSymbol$0$1 = arg$Select$1$2.name;
-                              if (arg$ModuleSymbol$0$1 === "Math") {
-                                switch (arg$Symbol$0$) {
-                                  case "sin":
-                                    break;
-                                  case "cos":
-                                    break;
-                                  default:
-                                    break split_1$;
-                                }
-                              } else {
-                                break split_1$
+                          break split_1$;
+                        }
+                        break split_1$;
+                      }
+                      if (arg$Select$1$1 instanceof Block.Symbol.class) {
+                        arg$Symbol$0$ = arg$Select$1$1.name;
+                        if (arg$Symbol$0$ === "concat") {
+                          p = arg$Select$0$;
+                          break split_2$
+                        }
+                        if (arg$Symbol$0$1 === "globalThis") {
+                          if (arg$Select$1$2 instanceof Block.ModuleSymbol.class) {
+                            arg$ModuleSymbol$0$1 = arg$Select$1$2.name;
+                            if (arg$ModuleSymbol$0$1 === "Math") {
+                              switch (arg$Symbol$0$) {
+                                case "sin":
+                                  break;
+                                case "cos":
+                                  break;
+                                default:
+                                  break split_1$;
                               }
                             } else {
                               break split_1$
@@ -642,24 +581,16 @@ let SpecializeHelpers1;
                             break split_1$
                           }
                         } else {
-                          if (arg$Symbol$0$1 === "globalThis") {
-                            if (arg$Select$1$2 instanceof Block.ModuleSymbol.class) {
-                              arg$ModuleSymbol$0$1 = arg$Select$1$2.name;
-                              if (arg$ModuleSymbol$0$1 === "Math") {
-                                break split_1$
-                              }
-                              break split_1$;
-                            }
-                            break split_1$;
-                          }
-                          break split_1$;
+                          break split_1$
                         }
                       } else {
-                        if (arg$Select$1$1 instanceof Block.Symbol.class) {
-                          arg$Symbol$0$ = arg$Select$1$1.name;
-                          if (arg$Symbol$0$ === "concat") {
-                            p = arg$Select$0$;
-                            break split_2$
+                        if (arg$Symbol$0$1 === "globalThis") {
+                          if (arg$Select$1$2 instanceof Block.ModuleSymbol.class) {
+                            arg$ModuleSymbol$0$1 = arg$Select$1$2.name;
+                            if (arg$ModuleSymbol$0$1 === "Math") {
+                              break split_1$
+                            }
+                            break split_1$;
                           }
                           break split_1$;
                         }
@@ -683,157 +614,162 @@ let SpecializeHelpers1;
                         p = arg$Select$0$;
                         break split_2$
                       }
-                      if (arg$Select$0$ instanceof Block.ValueRef.class) {
-                        arg$ValueRef$0$1 = arg$Select$0$.l;
-                        if (arg$ValueRef$0$1 instanceof Block.ModuleSymbol.class) {
-                          arg$ModuleSymbol$0$ = arg$ValueRef$0$1.name;
-                          arg$ModuleSymbol$1$ = arg$ValueRef$0$1.value;
-                          arg$ModuleSymbol$2$ = arg$ValueRef$0$1.redirect;
-                          clsSymb1 = arg$Select$1$1;
-                          if (clsSymb1 instanceof Block.ConcreteClassSymbol.class) {} else {
-                            fld = arg$Symbol$0$;
-                            redir = arg$ModuleSymbol$2$;
-                            value = arg$ModuleSymbol$1$;
-                            name = arg$ModuleSymbol$0$;
-                            mapPropName = SpecializeHelpers.getGenMapName(name, false);
-                            SpecializeHelpers.getCacheName(name, false);
-                            genMap = value[mapPropName];
-                            if (genMap === undefined) {
-                              tmp9 = true;
-                            } else {
-                              tmp9 = false;
-                            }
-                            scrut7 = ! tmp9;
-                            if (scrut7 === true) {
-                              f_gen = runtime.safeCall(genMap.get(fld));
-                              if (f_gen instanceof Runtime.Unit.class) {
-                                tmp10 = true;
-                              } else {
-                                tmp10 = false;
-                              }
-                              scrut8 = ! tmp10;
-                              if (scrut8 === true) {
-                                res2 = runtime.safeCall(f_gen(...param4));
-                                scrut9 = ShapeSet.staticSet(res2[1]);
-                                if (scrut9 === true) {
-                                  tmp11 = ShapeSet.valOfSet(res2[1]);
-                                  v2p = ShapeSet.val2path(tmp11, param0.allocs, param0.valueNameCtx);
-                                  return globalThis.Object.freeze([
-                                    v2p[0],
-                                    v2p[1],
-                                    res2[1]
-                                  ])
-                                }
-                                tmp12 = Block.End();
-                                tmp13 = Block.ModuleSymbol(name, value, redir);
-                                tmp14 = Block.ValueRef(tmp13);
-                                tmp15 = Block.Symbol(res2[0]);
-                                tmp16 = Block.Select(tmp14, tmp15);
-                                tmp17 = Block.Call(tmp16, param3);
-                                return globalThis.Object.freeze([
-                                  tmp12,
-                                  tmp17,
-                                  res2[1]
-                                ]);
-                              }
-                              tmp18 = "module " + name;
-                              tmp19 = tmp18 + " is staged but function ";
-                              tmp20 = tmp19 + fld;
-                              tmp21 = tmp20 + " is not found in generator map";
-                              throw runtime.safeCall(globalThis.Error(tmp21));
-                            }
-                            scrut10 = runtime.safeCall(param4.every(ShapeSet.staticSet));
-                            if (scrut10 === true) {
-                              f_imp = value[fld];
-                              tmp22 = runtime.safeCall(param4.map(ShapeSet.valOfSet));
-                              evaluated = runtime.safeCall(f_imp(...tmp22));
-                              evaluated_path = ShapeSet.val2path(evaluated, param0.allocs, param0.valueNameCtx);
-                              tmp23 = SpecializeHelpers.sov(evaluated, param0.valueNameCtx);
-                              return globalThis.Object.freeze([
-                                evaluated_path[0],
-                                evaluated_path[1],
-                                tmp23
-                              ])
-                            }
-                            break split_3$;
-                          }
-                        } else {
-                          break split_1$
-                        }
-                      } else {
-                        break split_1$
-                      }
-                    } else {
-                      if (arg$Select$0$ instanceof Block.ValueRef.class) {
-                        arg$ValueRef$0$1 = arg$Select$0$.l;
-                        if (arg$ValueRef$0$1 instanceof Block.ModuleSymbol.class) {
-                          arg$ModuleSymbol$0$ = arg$ValueRef$0$1.name;
-                          arg$ModuleSymbol$1$ = arg$ValueRef$0$1.value;
-                          arg$ModuleSymbol$2$ = arg$ValueRef$0$1.redirect;
-                          clsSymb1 = arg$Select$1$1;
-                          if (clsSymb1 instanceof Block.ConcreteClassSymbol.class) {} else {
-                            break split_1$
-                          }
-                        } else {
-                          break split_1$
-                        }
-                      } else {
-                        break split_1$
-                      }
+                      break split_1$;
                     }
-                    tmp28 = Block.End();
-                    tmp29 = ShapeSet.mkClass(clsSymb1, param4);
-                    return globalThis.Object.freeze([
-                      tmp28,
-                      param1,
-                      tmp29
-                    ])
+                    break split_1$;
                   }
-                } else if (param2 instanceof Block.ValueRef.class) {
-                  arg$ValueRef$0$2 = param2.l;
-                  clsSymb2 = arg$ValueRef$0$2;
-                  if (clsSymb2 instanceof Block.ConcreteClassSymbol.class) {
-                    scrut5 = SpecializeHelpers.isStagedClass(clsSymb2.value);
-                    if (scrut5 === true) {
-                      cache1 = SpecializeHelpers.getClassCache(clsSymb2.value);
-                      if (cache1 === undefined) {
-                        tmp24 = true;
-                      } else {
-                        tmp24 = false;
+                } else if (arg$Select$0$ instanceof Block.ValueRef.class) {
+                  arg$ValueRef$0$1 = arg$Select$0$.l;
+                  if (arg$ValueRef$0$1 instanceof Block.ModuleSymbol.class) {
+                    arg$ModuleSymbol$0$ = arg$ValueRef$0$1.name;
+                    arg$ModuleSymbol$1$ = arg$ValueRef$0$1.value;
+                    clsSymb1 = arg$Select$1$1;
+                    if (clsSymb1 instanceof Block.ConcreteClassSymbol.class) {
+                      tmp9 = Block.End();
+                      tmp10 = ShapeSet.mkClass(clsSymb1, param4);
+                      return globalThis.Object.freeze([
+                        tmp9,
+                        param1,
+                        tmp10
+                      ])
+                    }
+                    if (arg$Select$1$1 instanceof Block.Symbol.class) {
+                      arg$Symbol$0$ = arg$Select$1$1.name;
+                      if (arg$Symbol$0$ === "concat") {
+                        p = arg$Select$0$;
+                        break split_2$
                       }
-                      scrut6 = ! tmp24;
-                      if (scrut6 === true) {
-                        res1 = SpecializeHelpers1.specializeCtor(clsSymb2, param4, param0.clearCtx);
-                        tmp25 = Block.End();
+                      fld = arg$Symbol$0$;
+                      value = arg$ModuleSymbol$1$;
+                      name = arg$ModuleSymbol$0$;
+                      mapPropName = SpecializeHelpers.getGenMapName(name, false);
+                      SpecializeHelpers.getCacheName(name, false);
+                      genMap = value[mapPropName];
+                      if (genMap === undefined) {
+                        tmp11 = true;
+                      } else {
+                        tmp11 = false;
+                      }
+                      scrut7 = ! tmp11;
+                      if (scrut7 === true) {
+                        f_gen = runtime.safeCall(genMap.get(fld));
+                        if (f_gen instanceof Runtime.Unit.class) {
+                          tmp12 = true;
+                        } else {
+                          tmp12 = false;
+                        }
+                        scrut8 = ! tmp12;
+                        if (scrut8 === true) {
+                          res2 = runtime.safeCall(f_gen(...param4));
+                          scrut9 = ShapeSet.staticSet(res2[1]);
+                          if (scrut9 === true) {
+                            tmp13 = ShapeSet.valOfSet(res2[1]);
+                            v2p = ShapeSet.val2path(tmp13, param0.allocs);
+                            return globalThis.Object.freeze([
+                              v2p[0],
+                              v2p[1],
+                              res2[1]
+                            ])
+                          }
+                          tmp14 = Block.End();
+                          tmp15 = Block.ModuleSymbol(name, value);
+                          tmp16 = Block.ValueRef(tmp15);
+                          tmp17 = Block.Symbol(res2[0]);
+                          tmp18 = Block.Select(tmp16, tmp17);
+                          tmp19 = Block.Call(tmp18, param3);
+                          return globalThis.Object.freeze([
+                            tmp14,
+                            tmp19,
+                            res2[1]
+                          ]);
+                        }
+                        tmp20 = "module " + name;
+                        tmp21 = tmp20 + " is staged but function ";
+                        tmp22 = tmp21 + fld;
+                        tmp23 = tmp22 + " is not found in generator map";
+                        throw runtime.safeCall(globalThis.Error(tmp23));
+                      }
+                      scrut10 = runtime.safeCall(param4.every(ShapeSet.staticSet));
+                      if (scrut10 === true) {
+                        f_imp = value[fld];
+                        tmp24 = runtime.safeCall(param4.map(ShapeSet.valOfSet));
+                        evaluated = runtime.safeCall(f_imp(...tmp24));
+                        evaluated_path = ShapeSet.val2path(evaluated, param0.allocs);
+                        tmp25 = SpecializeHelpers.sov(evaluated);
                         return globalThis.Object.freeze([
-                          tmp25,
-                          param1,
-                          res1
+                          evaluated_path[0],
+                          evaluated_path[1],
+                          tmp25
                         ])
                       }
-                      throw runtime.safeCall(globalThis.Error("class is staged but cache not found"));
+                    } else {
+                      break split_1$
                     }
-                    tmp26 = Block.End();
-                    tmp27 = ShapeSet.mkClass(clsSymb2, param4);
-                    return globalThis.Object.freeze([
-                      tmp26,
-                      param1,
-                      tmp27
-                    ]);
+                  } else {
+                    if (arg$Select$1$1 instanceof Block.Symbol.class) {
+                      arg$Symbol$0$ = arg$Select$1$1.name;
+                      if (arg$Symbol$0$ === "concat") {
+                        p = arg$Select$0$;
+                        break split_2$
+                      }
+                      break split_1$;
+                    }
+                    break split_1$;
                   }
-                  symb2 = arg$ValueRef$0$2;
-                  return SpecializeHelpers.sorBuiltinOp(param0, param1, param2, symb2.name, param3);
                 } else {
-                  break split_1$
+                  if (arg$Select$1$1 instanceof Block.Symbol.class) {
+                    arg$Symbol$0$ = arg$Select$1$1.name;
+                    if (arg$Symbol$0$ === "concat") {
+                      p = arg$Select$0$;
+                      break split_2$
+                    }
+                    break split_1$;
+                  }
+                  break split_1$;
                 }
+                tmp30 = Block.End();
+                tmp31 = ShapeSet.mkDyn();
+                return globalThis.Object.freeze([
+                  tmp30,
+                  param1,
+                  tmp31
+                ])
+              } else if (param2 instanceof Block.ValueRef.class) {
+                arg$ValueRef$0$2 = param2.l;
+                clsSymb2 = arg$ValueRef$0$2;
+                if (clsSymb2 instanceof Block.ConcreteClassSymbol.class) {
+                  scrut5 = SpecializeHelpers.isStagedClass(clsSymb2.value);
+                  if (scrut5 === true) {
+                    cache1 = SpecializeHelpers.getClassCache(clsSymb2.value);
+                    if (cache1 === undefined) {
+                      tmp26 = true;
+                    } else {
+                      tmp26 = false;
+                    }
+                    scrut6 = ! tmp26;
+                    if (scrut6 === true) {
+                      res1 = SpecializeHelpers1.specializeCtor(clsSymb2, param4, param0.clearCtx);
+                      tmp27 = Block.End();
+                      return globalThis.Object.freeze([
+                        tmp27,
+                        param1,
+                        res1
+                      ])
+                    }
+                    throw runtime.safeCall(globalThis.Error("class is staged but cache not found"));
+                  }
+                  tmp28 = Block.End();
+                  tmp29 = ShapeSet.mkClass(clsSymb2, param4);
+                  return globalThis.Object.freeze([
+                    tmp28,
+                    param1,
+                    tmp29
+                  ]);
+                }
+                symb2 = arg$ValueRef$0$2;
+                return SpecializeHelpers.sorBuiltinOp(param0, param1, param2, symb2.name, param3);
               }
-              tmp30 = Block.End();
-              tmp31 = ShapeSet.mkDyn();
-              return globalThis.Object.freeze([
-                tmp30,
-                param1,
-                tmp31
-              ]);
+              break split_1$;
             }
             tmp32 = SpecializeHelpers.sop(param0, p);
             scrut3 = runtime.safeCall(tmp32.values());
@@ -883,7 +819,7 @@ let SpecializeHelpers1;
             scrut11 = ShapeSet.staticSet(s);
             if (scrut11 === true) {
               tmp40 = ShapeSet.valOfSet(s);
-              scrut12 = ShapeSet.val2path(tmp40, ctx1.allocs, ctx1.valueNameCtx);
+              scrut12 = ShapeSet.val2path(tmp40, ctx1.allocs);
               if (runtime.Tuple.isArrayLike(scrut12) && scrut12.length === 2) {
                 element0$4 = runtime.Tuple.get(scrut12, 0);
                 element1$1 = runtime.Tuple.get(scrut12, 1);
@@ -952,110 +888,61 @@ let SpecializeHelpers1;
           tmp48 = "unknown result in sor: " + tmp47;
           throw runtime.safeCall(globalThis.Error(tmp48));
         case 3:
-          let mergeAssigned, propBranch, f1, implct, p1, args2, symb3, scrut13, scrut14, res4, implct1, blk1, s1, r1, scrut15, rest, symbols, newAllocs, newCtx, res5, x, f2, restBlock, p2, args3, symb4, res6, b2, scrut16, res7, b21, restBlock1, sym, opt, rhs, scrut17, blk2, s11, r11, scrut18, b22, s2, canReachEnd, x1, restBlock2, r, scrut19, blk3, s12, r12, scrut20, b23, s21, canReachEnd1, restBlock3, dflt, arms, p3, s3, filteredArms, dfltRes, scrut21, d, res8, canReachEnd2, scrut22, restRes, retShape, scrut23, d1, scrut24, scrut25, d2, dcanReachEnd, scrut26, scrut27, scrut28, arg$Match$0$, arg$Match$1$, arg$Match$2$, arg$Match$3$, arg$Assign$0$, arg$Assign$1$, arg$Assign$2$, element2$, element1$2, element0$5, element2$1, element1$3, element0$6, arg$Define$0$, arg$Define$1$, arg$ValDefn$0$, arg$ValDefn$1$, arg$ValDefn$2$, element2$2, element1$4, element0$7, element2$3, element1$5, element0$8, arg$Call$0$1, arg$Call$1$1, arg$Select$0$2, arg$Select$1$3, arg$Symbol$0$3, arg$Select$0$3, arg$ValueRef$0$4, arg$ValueRef$0$5, arg$Scoped$0$, arg$Scoped$1$, arg$Return$0$, arg$Return$1$, element2$4, element1$6, element0$9, arg$Call$0$2, arg$Call$1$2, arg$Select$0$4, arg$Select$1$4, arg$Symbol$0$4, arg$Select$0$5, arg$ValueRef$0$6, arg$ValueRef$0$7, tmp49, tmp50, tmp51, lambda3, tmp52, tmp53, tmp54, tmp55, tmp56, tmp57, tmp58, tmp59, tmp60, tmp61, tmp62, tmp63, tmp64, tmp65, tmp66, tmp67, tmp68, tmp69, tmp70, tmp71, tmp72, tmp73, tmp74, tmp75, tmp76, tmp77, tmp78, tmp79, tmp80, lambda4, tmp81, tmp82, tmp83, tmp84, tmp85, tmp86, tmp87, tmp88, arg$Some$0$, tmp89, tmp90, tmp91, tmp92, tmp93, lambda5, tmp94, arg$Some$0$1, tmp95, tmp96, arg$Some$0$2, arg$Some$0$3, arg$Some$0$4, tmp97, tmp98, tmp99, tmp100, tmp101, tmp102, tmp103, tmp104, tmp105, tmp106, tmp107, tmp108, ctx2;
+          let f1, symb3, implct, args2, scrut13, scrut14, res4, implct1, blk1, s1, r1, scrut15, rest, symbols, newAllocs, newCtx, res5, x, f2, restBlock, symb4, args3, res6, b2, scrut16, restBlock1, sym, opt, rhs, scrut17, blk2, s11, r11, scrut18, b21, s2, x1, restBlock2, r, scrut19, blk3, s12, r12, scrut20, b22, s21, restBlock3, dflt, arms, p1, s3, filteredArms, scrut21, scrut22, d, scrut23, d1, branchCtx, scrut24, newDflt, d2, branchCtx1, scrut25, newDflt1, arg$Match$0$, arg$Match$1$, arg$Match$2$, arg$Match$3$, arg$Assign$0$, arg$Assign$1$, arg$Assign$2$, element2$, element1$2, element0$5, element1$3, element0$6, arg$Define$0$, arg$Define$1$, arg$ValDefn$0$, arg$ValDefn$1$, arg$ValDefn$2$, element2$1, element1$4, element0$7, element1$5, element0$8, arg$Call$0$1, arg$Call$1$1, arg$Select$0$2, arg$Select$1$3, arg$ValueRef$0$4, arg$Symbol$0$3, arg$Scoped$0$, arg$Scoped$1$, arg$Return$0$, arg$Return$1$, element2$2, element1$6, element0$9, arg$Call$0$2, arg$Call$1$2, arg$Select$0$3, arg$Select$1$4, arg$ValueRef$0$5, arg$Symbol$0$4, tmp49, tmp50, tmp51, tmp52, lambda3, tmp53, tmp54, tmp55, tmp56, tmp57, tmp58, tmp59, tmp60, tmp61, tmp62, tmp63, tmp64, tmp65, tmp66, tmp67, tmp68, tmp69, tmp70, tmp71, tmp72, tmp73, lambda4, tmp74, tmp75, tmp76, tmp77, arg$Some$0$, arg$Some$0$1, tmp78, tmp79, tmp80, tmp81, tmp82, tmp83, tmp84, tmp85, tmp86, tmp87, tmp88, tmp89, tmp90, tmp91, tmp92, tmp93, tmp94, tmp95, tmp96, tmp97, tmp98, ctx2;
           ctx2 = param0;
           split_1$1: {
             split_2$1: {
-              split_3$1: {
-                if (param1 instanceof Block.End.class) {
-                  tmp49 = ShapeSet.mkBot();
-                  return globalThis.Object.freeze([
-                    param1,
-                    tmp49,
-                    true
-                  ])
-                } else if (param1 instanceof Block.Return.class) {
-                  arg$Return$0$ = param1.res;
-                  arg$Return$1$ = param1.implct;
-                  if (arg$Return$0$ instanceof Block.Call.class) {
-                    arg$Call$0$2 = arg$Return$0$._fun;
-                    arg$Call$1$2 = arg$Return$0$.args;
-                    if (arg$Call$0$2 instanceof Block.Select.class) {
-                      arg$Select$0$4 = arg$Call$0$2.qual;
-                      arg$Select$1$4 = arg$Call$0$2.name;
+              if (param1 instanceof Block.End.class) {
+                tmp49 = ShapeSet.mkBot();
+                return globalThis.Object.freeze([
+                  param1,
+                  tmp49
+                ])
+              } else if (param1 instanceof Block.Return.class) {
+                arg$Return$0$ = param1.res;
+                arg$Return$1$ = param1.implct;
+                if (arg$Return$0$ instanceof Block.Call.class) {
+                  arg$Call$0$2 = arg$Return$0$._fun;
+                  arg$Call$1$2 = arg$Return$0$.args;
+                  if (arg$Call$0$2 instanceof Block.Select.class) {
+                    arg$Select$0$3 = arg$Call$0$2.qual;
+                    arg$Select$1$4 = arg$Call$0$2.name;
+                    if (arg$Select$0$3 instanceof Block.ValueRef.class) {
+                      arg$ValueRef$0$5 = arg$Select$0$3.l;
                       if (arg$Select$1$4 instanceof Block.Symbol.class) {
                         arg$Symbol$0$4 = arg$Select$1$4.name;
                         implct = arg$Return$1$;
                         args2 = arg$Call$1$2;
                         f1 = arg$Symbol$0$4;
-                        p1 = arg$Select$0$4;
-                        if (f1 === "concat") {
+                        symb3 = arg$ValueRef$0$5;
+                        if (symb3 instanceof Block.ModuleSymbol.class) {
                           tmp50 = true;
                         } else {
                           tmp50 = false;
                         }
                         scrut14 = ! tmp50;
                         if (scrut14 === true) {
-                          if (p1 instanceof Block.ValueRef.class) {
-                            arg$ValueRef$0$7 = p1.l;
-                            symb3 = arg$ValueRef$0$7;
-                            if (symb3 instanceof Block.ModuleSymbol.class) {
-                              tmp51 = true;
-                            } else {
-                              tmp51 = false;
-                            }
-                            scrut13 = ! tmp51;
-                            if (scrut13 === true) {
-                              break split_1$1
-                            }
-                            implct1 = arg$Return$1$;
-                            res4 = arg$Return$0$;
-                            scrut15 = SpecializeHelpers.sor(ctx2, res4);
-                            if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
-                              element0$9 = runtime.Tuple.get(scrut15, 0);
-                              element1$6 = runtime.Tuple.get(scrut15, 1);
-                              element2$4 = runtime.Tuple.get(scrut15, 2);
-                              s1 = element2$4;
-                              r1 = element1$6;
-                              blk1 = element0$9;
-                              break split_2$1
-                            }
-                          } else if (p1 instanceof Block.Select.class) {
-                            arg$Select$0$5 = p1.qual;
-                            if (arg$Select$0$5 instanceof Block.ValueRef.class) {
-                              arg$ValueRef$0$6 = arg$Select$0$5.l;
-                              if (arg$ValueRef$0$6 instanceof Block.ConcreteClassSymbol.class) {
-                                break split_1$1
-                              }
-                              implct1 = arg$Return$1$;
-                              res4 = arg$Return$0$;
-                              scrut15 = SpecializeHelpers.sor(ctx2, res4);
-                              if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
-                                element0$9 = runtime.Tuple.get(scrut15, 0);
-                                element1$6 = runtime.Tuple.get(scrut15, 1);
-                                element2$4 = runtime.Tuple.get(scrut15, 2);
-                                s1 = element2$4;
-                                r1 = element1$6;
-                                blk1 = element0$9;
-                                break split_2$1
-                              }
-                            } else {
-                              implct1 = arg$Return$1$;
-                              res4 = arg$Return$0$;
-                              scrut15 = SpecializeHelpers.sor(ctx2, res4);
-                              if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
-                                element0$9 = runtime.Tuple.get(scrut15, 0);
-                                element1$6 = runtime.Tuple.get(scrut15, 1);
-                                element2$4 = runtime.Tuple.get(scrut15, 2);
-                                s1 = element2$4;
-                                r1 = element1$6;
-                                blk1 = element0$9;
-                                break split_2$1
-                              }
-                            }
+                          if (f1 === "concat") {
+                            tmp51 = true;
                           } else {
-                            implct1 = arg$Return$1$;
-                            res4 = arg$Return$0$;
-                            scrut15 = SpecializeHelpers.sor(ctx2, res4);
-                            if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
-                              element0$9 = runtime.Tuple.get(scrut15, 0);
-                              element1$6 = runtime.Tuple.get(scrut15, 1);
-                              element2$4 = runtime.Tuple.get(scrut15, 2);
-                              s1 = element2$4;
-                              r1 = element1$6;
-                              blk1 = element0$9;
-                              break split_2$1
-                            }
+                            tmp51 = false;
+                          }
+                          scrut13 = ! tmp51;
+                          if (scrut13 === true) {
+                            tmp52 = Option.Some(implct);
+                            return SpecializeHelpers.dispatchMethodCall(ctx2, Option.None, tmp52, symb3, f1, args2)
+                          }
+                          implct1 = arg$Return$1$;
+                          res4 = arg$Return$0$;
+                          scrut15 = SpecializeHelpers.sor(ctx2, res4);
+                          if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
+                            element0$9 = runtime.Tuple.get(scrut15, 0);
+                            element1$6 = runtime.Tuple.get(scrut15, 1);
+                            element2$2 = runtime.Tuple.get(scrut15, 2);
+                            s1 = element2$2;
+                            r1 = element1$6;
+                            blk1 = element0$9;
+                            break split_1$1
                           }
                         } else {
                           implct1 = arg$Return$1$;
@@ -1064,11 +951,11 @@ let SpecializeHelpers1;
                           if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
                             element0$9 = runtime.Tuple.get(scrut15, 0);
                             element1$6 = runtime.Tuple.get(scrut15, 1);
-                            element2$4 = runtime.Tuple.get(scrut15, 2);
-                            s1 = element2$4;
+                            element2$2 = runtime.Tuple.get(scrut15, 2);
+                            s1 = element2$2;
                             r1 = element1$6;
                             blk1 = element0$9;
-                            break split_2$1
+                            break split_1$1
                           }
                         }
                       } else {
@@ -1078,11 +965,11 @@ let SpecializeHelpers1;
                         if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
                           element0$9 = runtime.Tuple.get(scrut15, 0);
                           element1$6 = runtime.Tuple.get(scrut15, 1);
-                          element2$4 = runtime.Tuple.get(scrut15, 2);
-                          s1 = element2$4;
+                          element2$2 = runtime.Tuple.get(scrut15, 2);
+                          s1 = element2$2;
                           r1 = element1$6;
                           blk1 = element0$9;
-                          break split_2$1
+                          break split_1$1
                         }
                       }
                     } else {
@@ -1092,11 +979,11 @@ let SpecializeHelpers1;
                       if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
                         element0$9 = runtime.Tuple.get(scrut15, 0);
                         element1$6 = runtime.Tuple.get(scrut15, 1);
-                        element2$4 = runtime.Tuple.get(scrut15, 2);
-                        s1 = element2$4;
+                        element2$2 = runtime.Tuple.get(scrut15, 2);
+                        s1 = element2$2;
                         r1 = element1$6;
                         blk1 = element0$9;
-                        break split_2$1
+                        break split_1$1
                       }
                     }
                   } else {
@@ -1106,206 +993,113 @@ let SpecializeHelpers1;
                     if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
                       element0$9 = runtime.Tuple.get(scrut15, 0);
                       element1$6 = runtime.Tuple.get(scrut15, 1);
-                      element2$4 = runtime.Tuple.get(scrut15, 2);
-                      s1 = element2$4;
+                      element2$2 = runtime.Tuple.get(scrut15, 2);
+                      s1 = element2$2;
                       r1 = element1$6;
                       blk1 = element0$9;
-                      break split_2$1
+                      break split_1$1
                     }
                   }
-                } else if (param1 instanceof Block.Scoped.class) {
-                  arg$Scoped$0$ = param1.symbols;
-                  arg$Scoped$1$ = param1.rest;
-                  rest = arg$Scoped$1$;
-                  symbols = arg$Scoped$0$;
-                  lambda3 = (undefined, function (x2) {
-                    let tmp109, tmp110;
-                    tmp109 = Block.ValueRef(x2);
-                    tmp110 = ShapeSet.mkBot();
-                    return ctx2.add(tmp109, tmp110)
-                  });
-                  runtime.safeCall(symbols.forEach(lambda3));
-                  newAllocs = [];
-                  tmp52 = globalThis.Object.freeze(new globalThis.Map(ctx2.ctx));
-                  newCtx = SpecializeHelpers.Ctx(tmp52, ctx2.valueNameCtx, ctx2.valDefnCtx, newAllocs, ctx2.thisShape);
-                  res5 = SpecializeHelpers.prop(newCtx, rest);
-                  tmp53 = globalThis.Object.freeze([
-                    ...symbols,
-                    ...newAllocs
-                  ]);
-                  tmp54 = SpecializeHelpers.wrapScoped(tmp53, res5[0]);
-                  return globalThis.Object.freeze([
-                    tmp54,
-                    res5[1],
-                    res5[2]
-                  ])
-                } else if (param1 instanceof Block.Assign.class) {
-                  arg$Assign$0$ = param1.lhs;
-                  arg$Assign$1$ = param1.rhs;
-                  arg$Assign$2$ = param1.rest;
-                  if (arg$Assign$1$ instanceof Block.Call.class) {
-                    arg$Call$0$1 = arg$Assign$1$._fun;
-                    arg$Call$1$1 = arg$Assign$1$.args;
-                    if (arg$Call$0$1 instanceof Block.Select.class) {
-                      arg$Select$0$2 = arg$Call$0$1.qual;
-                      arg$Select$1$3 = arg$Call$0$1.name;
+                } else {
+                  implct1 = arg$Return$1$;
+                  res4 = arg$Return$0$;
+                  scrut15 = SpecializeHelpers.sor(ctx2, res4);
+                  if (runtime.Tuple.isArrayLike(scrut15) && scrut15.length === 3) {
+                    element0$9 = runtime.Tuple.get(scrut15, 0);
+                    element1$6 = runtime.Tuple.get(scrut15, 1);
+                    element2$2 = runtime.Tuple.get(scrut15, 2);
+                    s1 = element2$2;
+                    r1 = element1$6;
+                    blk1 = element0$9;
+                    break split_1$1
+                  }
+                }
+              } else if (param1 instanceof Block.Scoped.class) {
+                arg$Scoped$0$ = param1.symbols;
+                arg$Scoped$1$ = param1.rest;
+                rest = arg$Scoped$1$;
+                symbols = arg$Scoped$0$;
+                lambda3 = (undefined, function (x2, _, _1) {
+                  let tmp99, tmp100;
+                  tmp99 = Block.ValueRef(x2);
+                  tmp100 = ShapeSet.mkBot();
+                  return ctx2.add(tmp99, tmp100)
+                });
+                runtime.safeCall(symbols.forEach(lambda3));
+                newAllocs = [];
+                tmp53 = globalThis.Object.freeze(new globalThis.Map(ctx2.ctx));
+                newCtx = SpecializeHelpers.Ctx(tmp53, ctx2.valDefnCtx, newAllocs, ctx2.thisShape);
+                res5 = SpecializeHelpers.prop(newCtx, rest);
+                tmp54 = globalThis.Object.freeze([
+                  ...symbols,
+                  ...newAllocs
+                ]);
+                tmp55 = SpecializeHelpers.wrapScoped(tmp54, res5[0]);
+                return globalThis.Object.freeze([
+                  tmp55,
+                  res5[1]
+                ])
+              } else if (param1 instanceof Block.Assign.class) {
+                arg$Assign$0$ = param1.lhs;
+                arg$Assign$1$ = param1.rhs;
+                arg$Assign$2$ = param1.rest;
+                if (arg$Assign$1$ instanceof Block.Call.class) {
+                  arg$Call$0$1 = arg$Assign$1$._fun;
+                  arg$Call$1$1 = arg$Assign$1$.args;
+                  if (arg$Call$0$1 instanceof Block.Select.class) {
+                    arg$Select$0$2 = arg$Call$0$1.qual;
+                    arg$Select$1$3 = arg$Call$0$1.name;
+                    if (arg$Select$0$2 instanceof Block.ValueRef.class) {
+                      arg$ValueRef$0$4 = arg$Select$0$2.l;
                       if (arg$Select$1$3 instanceof Block.Symbol.class) {
                         arg$Symbol$0$3 = arg$Select$1$3.name;
                         restBlock = arg$Assign$2$;
                         args3 = arg$Call$1$1;
                         f2 = arg$Symbol$0$3;
-                        p2 = arg$Select$0$2;
+                        symb4 = arg$ValueRef$0$4;
                         x = arg$Assign$0$;
-                        if (p2 instanceof Block.ValueRef.class) {
-                          arg$ValueRef$0$5 = p2.l;
-                          symb4 = arg$ValueRef$0$5;
-                          if (symb4 instanceof Block.ModuleSymbol.class) {
-                            tmp55 = true;
+                        if (symb4 instanceof Block.ModuleSymbol.class) {
+                          tmp56 = true;
+                        } else {
+                          tmp56 = false;
+                        }
+                        scrut16 = ! tmp56;
+                        if (scrut16 === true) {
+                          tmp57 = Option.Some(x);
+                          res6 = SpecializeHelpers.dispatchMethodCall(ctx2, tmp57, Option.None, symb4, f2, args3);
+                          tmp58 = Block.ValueRef(x);
+                          tmp59 = ctx2.add(tmp58, res6[1]);
+                          b2 = SpecializeHelpers.prop(tmp59, restBlock);
+                          tmp60 = Block.concat(res6[0], b2[0]);
+                          return globalThis.Object.freeze([
+                            tmp60,
+                            b2[1]
+                          ])
+                        }
+                        restBlock2 = arg$Assign$2$;
+                        r = arg$Assign$1$;
+                        x1 = arg$Assign$0$;
+                        scrut19 = SpecializeHelpers.sor(ctx2, r);
+                        if (runtime.Tuple.isArrayLike(scrut19) && scrut19.length === 3) {
+                          element0$5 = runtime.Tuple.get(scrut19, 0);
+                          element1$2 = runtime.Tuple.get(scrut19, 1);
+                          element2$ = runtime.Tuple.get(scrut19, 2);
+                          s12 = element2$;
+                          r12 = element1$2;
+                          blk3 = element0$5;
+                          tmp61 = Block.ValueRef(x1);
+                          tmp62 = ctx2.add(tmp61, s12);
+                          scrut20 = SpecializeHelpers.prop(tmp62, restBlock2);
+                          if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 2) {
+                            element0$6 = runtime.Tuple.get(scrut20, 0);
+                            element1$3 = runtime.Tuple.get(scrut20, 1);
+                            s21 = element1$3;
+                            b22 = element0$6;
                           } else {
-                            tmp55 = false;
-                          }
-                          scrut16 = ! tmp55;
-                          if (scrut16 === true) {
-                            tmp56 = Option.Some(x);
-                            res6 = SpecializeHelpers.dispatchMethodCall(ctx2, tmp56, Option.None, p2, f2, args3);
-                            tmp57 = Block.ValueRef(x);
-                            tmp58 = ctx2.add(tmp57, res6[1]);
-                            b2 = SpecializeHelpers.prop(tmp58, restBlock);
-                            tmp59 = Block.concat(res6[0], b2[0]);
-                            return globalThis.Object.freeze([
-                              tmp59,
-                              b2[1],
-                              b2[2]
-                            ])
-                          }
-                          restBlock2 = arg$Assign$2$;
-                          r = arg$Assign$1$;
-                          x1 = arg$Assign$0$;
-                          scrut19 = SpecializeHelpers.sor(ctx2, r);
-                          if (runtime.Tuple.isArrayLike(scrut19) && scrut19.length === 3) {
-                            element0$5 = runtime.Tuple.get(scrut19, 0);
-                            element1$2 = runtime.Tuple.get(scrut19, 1);
-                            element2$ = runtime.Tuple.get(scrut19, 2);
-                            s12 = element2$;
-                            r12 = element1$2;
-                            blk3 = element0$5;
-                            tmp60 = Block.ValueRef(x1);
-                            tmp61 = ctx2.add(tmp60, s12);
-                            scrut20 = SpecializeHelpers.prop(tmp61, restBlock2);
-                            if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 3) {
-                              element0$6 = runtime.Tuple.get(scrut20, 0);
-                              element1$3 = runtime.Tuple.get(scrut20, 1);
-                              element2$1 = runtime.Tuple.get(scrut20, 2);
-                              canReachEnd1 = element2$1;
-                              s21 = element1$3;
-                              b23 = element0$6;
-                            } else {
-                              break split_3$1
-                            }
-                          } else {
-                            break split_3$1
-                          }
-                        } else if (p2 instanceof Block.Select.class) {
-                          arg$Select$0$3 = p2.qual;
-                          if (arg$Select$0$3 instanceof Block.ValueRef.class) {
-                            arg$ValueRef$0$4 = arg$Select$0$3.l;
-                            if (arg$ValueRef$0$4 instanceof Block.ConcreteClassSymbol.class) {
-                              tmp62 = Option.Some(x);
-                              res7 = SpecializeHelpers.dispatchMethodCall(ctx2, tmp62, Option.None, p2, f2, args3);
-                              tmp63 = Block.ValueRef(x);
-                              tmp64 = ctx2.add(tmp63, res7[1]);
-                              b21 = SpecializeHelpers.prop(tmp64, restBlock);
-                              tmp65 = Block.concat(res7[0], b21[0]);
-                              return globalThis.Object.freeze([
-                                tmp65,
-                                b21[1],
-                                b21[2]
-                              ])
-                            }
-                            restBlock2 = arg$Assign$2$;
-                            r = arg$Assign$1$;
-                            x1 = arg$Assign$0$;
-                            scrut19 = SpecializeHelpers.sor(ctx2, r);
-                            if (runtime.Tuple.isArrayLike(scrut19) && scrut19.length === 3) {
-                              element0$5 = runtime.Tuple.get(scrut19, 0);
-                              element1$2 = runtime.Tuple.get(scrut19, 1);
-                              element2$ = runtime.Tuple.get(scrut19, 2);
-                              s12 = element2$;
-                              r12 = element1$2;
-                              blk3 = element0$5;
-                              tmp66 = Block.ValueRef(x1);
-                              tmp67 = ctx2.add(tmp66, s12);
-                              scrut20 = SpecializeHelpers.prop(tmp67, restBlock2);
-                              if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 3) {
-                                element0$6 = runtime.Tuple.get(scrut20, 0);
-                                element1$3 = runtime.Tuple.get(scrut20, 1);
-                                element2$1 = runtime.Tuple.get(scrut20, 2);
-                                canReachEnd1 = element2$1;
-                                s21 = element1$3;
-                                b23 = element0$6;
-                              } else {
-                                break split_3$1
-                              }
-                            } else {
-                              break split_3$1
-                            }
-                          } else {
-                            restBlock2 = arg$Assign$2$;
-                            r = arg$Assign$1$;
-                            x1 = arg$Assign$0$;
-                            scrut19 = SpecializeHelpers.sor(ctx2, r);
-                            if (runtime.Tuple.isArrayLike(scrut19) && scrut19.length === 3) {
-                              element0$5 = runtime.Tuple.get(scrut19, 0);
-                              element1$2 = runtime.Tuple.get(scrut19, 1);
-                              element2$ = runtime.Tuple.get(scrut19, 2);
-                              s12 = element2$;
-                              r12 = element1$2;
-                              blk3 = element0$5;
-                              tmp68 = Block.ValueRef(x1);
-                              tmp69 = ctx2.add(tmp68, s12);
-                              scrut20 = SpecializeHelpers.prop(tmp69, restBlock2);
-                              if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 3) {
-                                element0$6 = runtime.Tuple.get(scrut20, 0);
-                                element1$3 = runtime.Tuple.get(scrut20, 1);
-                                element2$1 = runtime.Tuple.get(scrut20, 2);
-                                canReachEnd1 = element2$1;
-                                s21 = element1$3;
-                                b23 = element0$6;
-                              } else {
-                                break split_3$1
-                              }
-                            } else {
-                              break split_3$1
-                            }
+                            break split_2$1
                           }
                         } else {
-                          restBlock2 = arg$Assign$2$;
-                          r = arg$Assign$1$;
-                          x1 = arg$Assign$0$;
-                          scrut19 = SpecializeHelpers.sor(ctx2, r);
-                          if (runtime.Tuple.isArrayLike(scrut19) && scrut19.length === 3) {
-                            element0$5 = runtime.Tuple.get(scrut19, 0);
-                            element1$2 = runtime.Tuple.get(scrut19, 1);
-                            element2$ = runtime.Tuple.get(scrut19, 2);
-                            s12 = element2$;
-                            r12 = element1$2;
-                            blk3 = element0$5;
-                            tmp70 = Block.ValueRef(x1);
-                            tmp71 = ctx2.add(tmp70, s12);
-                            scrut20 = SpecializeHelpers.prop(tmp71, restBlock2);
-                            if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 3) {
-                              element0$6 = runtime.Tuple.get(scrut20, 0);
-                              element1$3 = runtime.Tuple.get(scrut20, 1);
-                              element2$1 = runtime.Tuple.get(scrut20, 2);
-                              canReachEnd1 = element2$1;
-                              s21 = element1$3;
-                              b23 = element0$6;
-                            } else {
-                              break split_3$1
-                            }
-                          } else {
-                            break split_3$1
-                          }
+                          break split_2$1
                         }
                       } else {
                         restBlock2 = arg$Assign$2$;
@@ -1319,21 +1113,19 @@ let SpecializeHelpers1;
                           s12 = element2$;
                           r12 = element1$2;
                           blk3 = element0$5;
-                          tmp72 = Block.ValueRef(x1);
-                          tmp73 = ctx2.add(tmp72, s12);
-                          scrut20 = SpecializeHelpers.prop(tmp73, restBlock2);
-                          if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 3) {
+                          tmp63 = Block.ValueRef(x1);
+                          tmp64 = ctx2.add(tmp63, s12);
+                          scrut20 = SpecializeHelpers.prop(tmp64, restBlock2);
+                          if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 2) {
                             element0$6 = runtime.Tuple.get(scrut20, 0);
                             element1$3 = runtime.Tuple.get(scrut20, 1);
-                            element2$1 = runtime.Tuple.get(scrut20, 2);
-                            canReachEnd1 = element2$1;
                             s21 = element1$3;
-                            b23 = element0$6;
+                            b22 = element0$6;
                           } else {
-                            break split_3$1
+                            break split_2$1
                           }
                         } else {
-                          break split_3$1
+                          break split_2$1
                         }
                       }
                     } else {
@@ -1348,21 +1140,19 @@ let SpecializeHelpers1;
                         s12 = element2$;
                         r12 = element1$2;
                         blk3 = element0$5;
-                        tmp74 = Block.ValueRef(x1);
-                        tmp75 = ctx2.add(tmp74, s12);
-                        scrut20 = SpecializeHelpers.prop(tmp75, restBlock2);
-                        if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 3) {
+                        tmp65 = Block.ValueRef(x1);
+                        tmp66 = ctx2.add(tmp65, s12);
+                        scrut20 = SpecializeHelpers.prop(tmp66, restBlock2);
+                        if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 2) {
                           element0$6 = runtime.Tuple.get(scrut20, 0);
                           element1$3 = runtime.Tuple.get(scrut20, 1);
-                          element2$1 = runtime.Tuple.get(scrut20, 2);
-                          canReachEnd1 = element2$1;
                           s21 = element1$3;
-                          b23 = element0$6;
+                          b22 = element0$6;
                         } else {
-                          break split_3$1
+                          break split_2$1
                         }
                       } else {
-                        break split_3$1
+                        break split_2$1
                       }
                     }
                   } else {
@@ -1377,350 +1167,244 @@ let SpecializeHelpers1;
                       s12 = element2$;
                       r12 = element1$2;
                       blk3 = element0$5;
-                      tmp76 = Block.ValueRef(x1);
-                      tmp77 = ctx2.add(tmp76, s12);
-                      scrut20 = SpecializeHelpers.prop(tmp77, restBlock2);
-                      if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 3) {
+                      tmp67 = Block.ValueRef(x1);
+                      tmp68 = ctx2.add(tmp67, s12);
+                      scrut20 = SpecializeHelpers.prop(tmp68, restBlock2);
+                      if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 2) {
                         element0$6 = runtime.Tuple.get(scrut20, 0);
                         element1$3 = runtime.Tuple.get(scrut20, 1);
-                        element2$1 = runtime.Tuple.get(scrut20, 2);
-                        canReachEnd1 = element2$1;
                         s21 = element1$3;
-                        b23 = element0$6;
+                        b22 = element0$6;
                       } else {
-                        break split_3$1
+                        break split_2$1
                       }
                     } else {
-                      break split_3$1
+                      break split_2$1
                     }
                   }
-                  tmp102 = Block.Assign(x1, r12, b23);
-                  tmp103 = Block.concat(blk3, tmp102);
-                  return globalThis.Object.freeze([
-                    tmp103,
-                    s21,
-                    canReachEnd1
-                  ])
-                } else if (param1 instanceof Block.Define.class) {
-                  arg$Define$0$ = param1.defn;
-                  arg$Define$1$ = param1.rest;
-                  if (arg$Define$0$ instanceof Block.ValDefn.class) {
-                    arg$ValDefn$0$ = arg$Define$0$.owner;
-                    arg$ValDefn$1$ = arg$Define$0$.sym;
-                    arg$ValDefn$2$ = arg$Define$0$.rhs;
-                    restBlock1 = arg$Define$1$;
-                    rhs = arg$ValDefn$2$;
-                    sym = arg$ValDefn$1$;
-                    opt = arg$ValDefn$0$;
-                    scrut17 = SpecializeHelpers.sor(ctx2, rhs);
-                    if (runtime.Tuple.isArrayLike(scrut17) && scrut17.length === 3) {
-                      element0$7 = runtime.Tuple.get(scrut17, 0);
-                      element1$4 = runtime.Tuple.get(scrut17, 1);
-                      element2$2 = runtime.Tuple.get(scrut17, 2);
-                      s11 = element2$2;
-                      r11 = element1$4;
-                      blk2 = element0$7;
-                      ctx2.addValDefn(sym.name, s11);
-                      scrut18 = SpecializeHelpers.prop(ctx2, restBlock1);
-                      if (runtime.Tuple.isArrayLike(scrut18) && scrut18.length === 3) {
-                        element0$8 = runtime.Tuple.get(scrut18, 0);
-                        element1$5 = runtime.Tuple.get(scrut18, 1);
-                        element2$3 = runtime.Tuple.get(scrut18, 2);
-                        canReachEnd = element2$3;
-                        s2 = element1$5;
-                        b22 = element0$8;
-                        tmp78 = Block.ValDefn(opt, sym, r11);
-                        tmp79 = Block.Define(tmp78, b22);
-                        tmp80 = Block.concat(blk2, tmp79);
-                        return globalThis.Object.freeze([
-                          tmp80,
-                          s2,
-                          canReachEnd
-                        ])
-                      }
-                    }
-                  }
-                } else if (param1 instanceof Block.Match.class) {
-                  arg$Match$0$ = param1.scrut;
-                  arg$Match$1$ = param1.arms;
-                  arg$Match$2$ = param1.dflt;
-                  arg$Match$3$ = param1.rest;
-                  restBlock3 = arg$Match$3$;
-                  dflt = arg$Match$2$;
-                  arms = arg$Match$1$;
-                  p3 = arg$Match$0$;
-                  mergeAssigned = function mergeAssigned(acc, assigned) {
-                    let lambda6;
-                    lambda6 = (undefined, function (ss, ps, _) {
-                      let scrut29, tmp109, tmp110;
-                      scrut29 = runtime.safeCall(acc.has(ps));
-                      if (scrut29 === true) {
-                        tmp109 = runtime.safeCall(acc.get(ps));
-                        tmp110 = ShapeSet.union2(tmp109, ss);
-                        return acc.set(ps, tmp110)
-                      }
-                      return acc.set(ps, ss);
-                    });
-                    return runtime.safeCall(assigned.forEach(lambda6))
-                  };
-                  propBranch = function propBranch(body, branchShape) {
-                    let branchCtx, scrut29, res9, tmp109, tmp110;
-                    branchCtx = ctx2.clone;
-                    if (p3 instanceof Block.ValueLit.class) {
-                      tmp109 = true;
+                } else {
+                  restBlock2 = arg$Assign$2$;
+                  r = arg$Assign$1$;
+                  x1 = arg$Assign$0$;
+                  scrut19 = SpecializeHelpers.sor(ctx2, r);
+                  if (runtime.Tuple.isArrayLike(scrut19) && scrut19.length === 3) {
+                    element0$5 = runtime.Tuple.get(scrut19, 0);
+                    element1$2 = runtime.Tuple.get(scrut19, 1);
+                    element2$ = runtime.Tuple.get(scrut19, 2);
+                    s12 = element2$;
+                    r12 = element1$2;
+                    blk3 = element0$5;
+                    tmp69 = Block.ValueRef(x1);
+                    tmp70 = ctx2.add(tmp69, s12);
+                    scrut20 = SpecializeHelpers.prop(tmp70, restBlock2);
+                    if (runtime.Tuple.isArrayLike(scrut20) && scrut20.length === 2) {
+                      element0$6 = runtime.Tuple.get(scrut20, 0);
+                      element1$3 = runtime.Tuple.get(scrut20, 1);
+                      s21 = element1$3;
+                      b22 = element0$6;
                     } else {
-                      tmp109 = false;
+                      break split_2$1
                     }
-                    scrut29 = ! tmp109;
-                    if (scrut29 === true) {
-                      branchCtx.add(p3, branchShape);
-                    }
-                    res9 = SpecializeHelpers.prop(branchCtx, body);
-                    tmp110 = runtime.safeCall(branchCtx.sub(ctx2));
-                    return globalThis.Object.freeze([
-                      ...res9,
-                      tmp110
-                    ])
-                  };
-                  s3 = SpecializeHelpers.sop(ctx2, p3);
-                  lambda4 = (undefined, function (r2, arm) {
-                    let fs, scrut29, res9, tmp109, tmp110, tmp111, tmp112, tmp113;
-                    fs = ShapeSet.filterSet(r2[0], arm.cse);
-                    scrut29 = runtime.safeCall(fs.isEmpty());
-                    if (scrut29 === true) {
-                      return r2
-                    }
-                    res9 = propBranch(arm.body, fs);
-                    mergeAssigned(r2[3], res9[3]);
-                    tmp109 = ShapeSet.restSet(r2[0], arm.cse);
-                    tmp110 = ShapeSet.union2(r2[1], res9[1]);
-                    tmp111 = Block.Arm(arm.cse, res9[0]);
-                    tmp112 = globalThis.Object.freeze([
-                      ...r2[2],
-                      tmp111
-                    ]);
-                    if (r2[4] === false) {
-                      tmp113 = res9[2];
+                  } else {
+                    break split_2$1
+                  }
+                }
+                tmp94 = Block.Assign(x1, r12, b22);
+                tmp95 = Block.concat(blk3, tmp94);
+                return globalThis.Object.freeze([
+                  tmp95,
+                  s21
+                ])
+              } else if (param1 instanceof Block.Define.class) {
+                arg$Define$0$ = param1.defn;
+                arg$Define$1$ = param1.rest;
+                if (arg$Define$0$ instanceof Block.ValDefn.class) {
+                  arg$ValDefn$0$ = arg$Define$0$.owner;
+                  arg$ValDefn$1$ = arg$Define$0$.sym;
+                  arg$ValDefn$2$ = arg$Define$0$.rhs;
+                  restBlock1 = arg$Define$1$;
+                  rhs = arg$ValDefn$2$;
+                  sym = arg$ValDefn$1$;
+                  opt = arg$ValDefn$0$;
+                  scrut17 = SpecializeHelpers.sor(ctx2, rhs);
+                  if (runtime.Tuple.isArrayLike(scrut17) && scrut17.length === 3) {
+                    element0$7 = runtime.Tuple.get(scrut17, 0);
+                    element1$4 = runtime.Tuple.get(scrut17, 1);
+                    element2$1 = runtime.Tuple.get(scrut17, 2);
+                    s11 = element2$1;
+                    r11 = element1$4;
+                    blk2 = element0$7;
+                    ctx2.addValDefn(sym.name, s11);
+                    scrut18 = SpecializeHelpers.prop(ctx2, restBlock1);
+                    if (runtime.Tuple.isArrayLike(scrut18) && scrut18.length === 2) {
+                      element0$8 = runtime.Tuple.get(scrut18, 0);
+                      element1$5 = runtime.Tuple.get(scrut18, 1);
+                      s2 = element1$5;
+                      b21 = element0$8;
+                      tmp71 = Block.ValDefn(opt, sym, r11);
+                      tmp72 = Block.Define(tmp71, b21);
+                      tmp73 = Block.concat(blk2, tmp72);
                       return globalThis.Object.freeze([
-                        tmp109,
-                        tmp110,
-                        tmp112,
-                        r2[3],
-                        tmp113
+                        tmp73,
+                        s2
                       ])
                     }
-                    tmp113 = true;
-                    return globalThis.Object.freeze([
-                      tmp109,
-                      tmp110,
-                      tmp112,
-                      r2[3],
-                      tmp113
-                    ]);
-                  });
-                  tmp81 = runtime.safeCall(Predef.foldl(lambda4));
-                  tmp82 = ShapeSet.mkBot();
-                  tmp83 = globalThis.Object.freeze([]);
-                  tmp84 = globalThis.Object.freeze(new globalThis.Map());
-                  tmp85 = globalThis.Object.freeze([
-                    s3,
-                    tmp82,
-                    tmp83,
-                    tmp84,
-                    false
-                  ]);
-                  filteredArms = runtime.safeCall(tmp81(tmp85, ...arms));
-                  scrut21 = runtime.safeCall(filteredArms[0].isEmpty());
-                  if (scrut21 === true) {
-                    tmp86 = ShapeSet.mkBot();
-                    tmp87 = globalThis.Object.freeze(new globalThis.Map());
-                    tmp88 = globalThis.Object.freeze([
-                      Option.None,
-                      tmp86,
-                      tmp87,
-                      Option.None
-                    ]);
+                  }
+                }
+              } else if (param1 instanceof Block.Match.class) {
+                arg$Match$0$ = param1.scrut;
+                arg$Match$1$ = param1.arms;
+                arg$Match$2$ = param1.dflt;
+                arg$Match$3$ = param1.rest;
+                restBlock3 = arg$Match$3$;
+                dflt = arg$Match$2$;
+                arms = arg$Match$1$;
+                p1 = arg$Match$0$;
+                s3 = SpecializeHelpers.sop(ctx2, p1);
+                lambda4 = (undefined, function (r2, arm) {
+                  let fs, scrut26, branchCtx2, scrut27, res7, tmp99, tmp100, tmp101, tmp102, tmp103, tmp104;
+                  fs = ShapeSet.filterSet(r2[0], arm.cse);
+                  scrut26 = runtime.safeCall(fs.isEmpty());
+                  if (scrut26 === true) {
+                    return r2
+                  }
+                  branchCtx2 = ctx2.clone;
+                  if (p1 instanceof Block.ValueLit.class) {
+                    tmp99 = true;
                   } else {
+                    tmp99 = false;
+                  }
+                  scrut27 = ! tmp99;
+                  if (scrut27 === true) {
+                    branchCtx2.add(p1, fs);
+                  }
+                  tmp100 = Block.concat(arm.body, restBlock3);
+                  res7 = SpecializeHelpers.prop(branchCtx2, tmp100);
+                  tmp101 = ShapeSet.restSet(r2[0], arm.cse);
+                  tmp102 = ShapeSet.union(r2[1], res7[1]);
+                  tmp103 = Block.Arm(arm.cse, res7[0]);
+                  tmp104 = globalThis.Object.freeze([
+                    ...r2[2],
+                    tmp103
+                  ]);
+                  return globalThis.Object.freeze([
+                    tmp101,
+                    tmp102,
+                    tmp104
+                  ]);
+                });
+                tmp74 = runtime.safeCall(Predef.foldl(lambda4));
+                tmp75 = ShapeSet.mkBot();
+                tmp76 = globalThis.Object.freeze([]);
+                tmp77 = globalThis.Object.freeze([
+                  s3,
+                  tmp75,
+                  tmp76
+                ]);
+                filteredArms = runtime.safeCall(tmp74(tmp77, ...arms));
+                scrut21 = filteredArms[2].length;
+                switch (scrut21) {
+                  case 0:
+                    scrut22 = runtime.safeCall(filteredArms[0].isEmpty());
+                    if (scrut22 === true) {
+                      param0 = ctx2;
+                      param1 = restBlock3;
+                      id = 3;
+                      continue loopLabel
+                    }
+                    if (dflt instanceof Option.Some.class) {
+                      arg$Some$0$1 = dflt.value;
+                      d = arg$Some$0$1;
+                      tmp78 = d;
+                    } else {
+                      tmp78 = Block.End();
+                    }
+                    tmp79 = Block.concat(tmp78, restBlock3);
+                    param0 = ctx2;
+                    param1 = tmp79;
+                    id = 3;
+                    continue loopLabel;
+                  case 1:
+                    scrut23 = runtime.safeCall(filteredArms[0].isEmpty());
+                    if (scrut23 === true) {
+                      return globalThis.Object.freeze([
+                        filteredArms[2][0].body,
+                        filteredArms[1]
+                      ])
+                    }
                     if (dflt instanceof Option.Some.class) {
                       arg$Some$0$ = dflt.value;
-                      d = arg$Some$0$;
-                      res8 = propBranch(d, filteredArms[0]);
-                      tmp89 = Option.Some(res8[0]);
-                      tmp90 = Option.Some(res8[2]);
-                      tmp91 = globalThis.Object.freeze([
-                        tmp89,
-                        res8[1],
-                        res8[3],
-                        tmp90
-                      ]);
-                    } else {
-                      tmp92 = ShapeSet.mkBot();
-                      tmp93 = globalThis.Object.freeze(new globalThis.Map());
-                      tmp91 = globalThis.Object.freeze([
-                        Option.None,
-                        tmp92,
-                        tmp93,
-                        Option.None
-                      ]);
-                    }
-                    tmp88 = tmp91;
-                  }
-                  dfltRes = tmp88;
-                  mergeAssigned(filteredArms[3], dfltRes[2]);
-                  lambda5 = (undefined, function (ss, ps, _) {
-                    let scrut29, tmp109, tmp110;
-                    scrut29 = runtime.safeCall(ctx2.ctx.has(ps));
-                    if (scrut29 === true) {
-                      tmp109 = runtime.safeCall(ctx2.ctx.get(ps));
-                      tmp110 = ShapeSet.union2(tmp109, ss);
-                      return ctx2.ctx.set(ps, tmp110)
-                    }
-                    return ctx2.ctx.set(ps, ss);
-                  });
-                  runtime.safeCall(filteredArms[3].forEach(lambda5));
-                  if (filteredArms[4] === false) {
-                    scrut22 = dfltRes[3];
-                    if (scrut22 instanceof Option.Some.class) {
-                      arg$Some$0$1 = scrut22.value;
-                      if (arg$Some$0$1 === true) {
-                        tmp95 = true;
+                      d1 = arg$Some$0$;
+                      branchCtx = ctx2.clone;
+                      if (p1 instanceof Block.ValueLit.class) {
+                        tmp80 = true;
                       } else {
-                        tmp95 = false;
+                        tmp80 = false;
                       }
-                    } else {
-                      tmp95 = false;
+                      scrut24 = ! tmp80;
+                      if (scrut24 === true) {
+                        branchCtx.add(p1, filteredArms[0]);
+                      }
+                      tmp81 = Block.concat(d1, restBlock3);
+                      newDflt = SpecializeHelpers.prop(branchCtx, tmp81);
+                      tmp82 = Option.Some(newDflt[0]);
+                      tmp83 = Block.End();
+                      tmp84 = Block.Match(p1, filteredArms[2], tmp82, tmp83);
+                      tmp85 = ShapeSet.union(filteredArms[1], newDflt[1]);
+                      return globalThis.Object.freeze([
+                        tmp84,
+                        tmp85
+                      ])
                     }
-                    tmp94 = tmp95;
-                  } else {
-                    tmp94 = true;
-                  }
-                  canReachEnd2 = tmp94;
-                  restRes = SpecializeHelpers.prop(ctx2, restBlock3);
-                  if (canReachEnd2 === true) {
-                    tmp96 = ShapeSet.union(filteredArms[1], dfltRes[1], restRes[1]);
-                  } else {
-                    tmp96 = ShapeSet.union(filteredArms[1], dfltRes[1]);
-                  }
-                  retShape = tmp96;
-                  scrut23 = filteredArms[2].length;
-                  switch (scrut23) {
-                    case 0:
-                      if (canReachEnd2 === true) {
-                        scrut24 = dfltRes[0];
-                        if (scrut24 instanceof Option.Some.class) {
-                          arg$Some$0$4 = scrut24.value;
-                          d1 = arg$Some$0$4;
-                          tmp97 = Block.concat(d1, restRes[0]);
-                          return globalThis.Object.freeze([
-                            tmp97,
-                            retShape,
-                            true
-                          ])
-                        }
-                        scrut25 = ! canReachEnd2;
-                        if (scrut25 === true) {
-                          scrut27 = dfltRes[0];
-                          if (scrut27 instanceof Option.Some.class) {
-                            arg$Some$0$2 = scrut27.value;
-                            d2 = arg$Some$0$2;
-                            scrut26 = dfltRes[3];
-                            if (scrut26 instanceof Option.Some.class) {
-                              arg$Some$0$3 = scrut26.value;
-                              dcanReachEnd = arg$Some$0$3;
-                              return globalThis.Object.freeze([
-                                d2,
-                                retShape,
-                                dcanReachEnd
-                              ])
-                            }
-                            return restRes;
-                          }
-                          return restRes;
-                        }
-                        return restRes;
+                    break;
+                  default:
+                    if (dflt instanceof Option.Some.class) {
+                      arg$Some$0$ = dflt.value;
+                      d2 = arg$Some$0$;
+                      branchCtx1 = ctx2.clone;
+                      if (p1 instanceof Block.ValueLit.class) {
+                        tmp86 = true;
+                      } else {
+                        tmp86 = false;
                       }
-                      scrut25 = ! canReachEnd2;
+                      scrut25 = ! tmp86;
                       if (scrut25 === true) {
-                        scrut27 = dfltRes[0];
-                        if (scrut27 instanceof Option.Some.class) {
-                          arg$Some$0$2 = scrut27.value;
-                          d2 = arg$Some$0$2;
-                          scrut26 = dfltRes[3];
-                          if (scrut26 instanceof Option.Some.class) {
-                            arg$Some$0$3 = scrut26.value;
-                            dcanReachEnd = arg$Some$0$3;
-                            return globalThis.Object.freeze([
-                              d2,
-                              retShape,
-                              dcanReachEnd
-                            ])
-                          }
-                          return restRes;
-                        }
-                        return restRes;
+                        branchCtx1.add(p1, filteredArms[0]);
                       }
-                      return restRes;
-                    case 1:
-                      scrut28 = dfltRes[0];
-                      if (scrut28 instanceof Option.None.class) {
-                        tmp98 = Block.concat(filteredArms[2][0].body, restRes[0]);
-                        if (canReachEnd2 === false) {
-                          tmp99 = restRes[2];
-                          return globalThis.Object.freeze([
-                            tmp98,
-                            retShape,
-                            tmp99
-                          ])
-                        }
-                        tmp99 = true;
-                        return globalThis.Object.freeze([
-                          tmp98,
-                          retShape,
-                          tmp99
-                        ]);
-                      }
-                      break;
-                  }
-                  tmp100 = Block.Match(p3, filteredArms[2], dfltRes[0], restRes[0]);
-                  if (canReachEnd2 === false) {
-                    tmp101 = restRes[2];
-                    return globalThis.Object.freeze([
-                      tmp100,
-                      retShape,
-                      tmp101
-                    ])
-                  }
-                  tmp101 = true;
-                  return globalThis.Object.freeze([
-                    tmp100,
-                    retShape,
-                    tmp101
-                  ]);
+                      tmp87 = Block.concat(d2, restBlock3);
+                      newDflt1 = SpecializeHelpers.prop(branchCtx1, tmp87);
+                      tmp88 = Option.Some(newDflt1[0]);
+                      tmp89 = Block.End();
+                      tmp90 = Block.Match(p1, filteredArms[2], tmp88, tmp89);
+                      tmp91 = ShapeSet.union(filteredArms[1], newDflt1[1]);
+                      return globalThis.Object.freeze([
+                        tmp90,
+                        tmp91
+                      ])
+                    }
                 }
+                tmp92 = Block.End();
+                tmp93 = Block.Match(p1, filteredArms[2], Option.None, tmp92);
+                return globalThis.Object.freeze([
+                  tmp93,
+                  filteredArms[1]
+                ])
               }
-              tmp104 = ShapeSet.mkDyn();
-              return globalThis.Object.freeze([
-                param1,
-                tmp104,
-                true
-              ]);
             }
-            tmp105 = Block.Return(r1, implct1);
-            tmp106 = Block.concat(blk1, tmp105);
+            tmp96 = ShapeSet.mkDyn();
             return globalThis.Object.freeze([
-              tmp106,
-              s1,
-              false
+              param1,
+              tmp96
             ]);
           }
-          tmp107 = Option.Some(implct);
-          tmp108 = SpecializeHelpers.dispatchMethodCall(ctx2, Option.None, tmp107, p1, f1, args2);
+          tmp97 = Block.Return(r1, implct1);
+          tmp98 = Block.concat(blk1, tmp97);
           return globalThis.Object.freeze([
-            ...tmp108,
-            false
+            tmp98,
+            s1
           ]);
         case 4:
-          let actualClass, defn, ps, scrut29, scrut30, preCtorBody, scrut31, scrut32, scrut33, ctorBody, scrut34, arg$FunDefn$0$, arg$FunDefn$1$, tmp109, lambda6, arg$FunDefn$2$, tmp110, arg$FunDefn$2$1, tmp111, tmp112, argShapes, ctx3;
+          let actualClass, defn, ps, scrut26, scrut27, preCtorBody, scrut28, scrut29, scrut30, ctorBody, scrut31, arg$FunDefn$0$, arg$FunDefn$1$, tmp99, lambda5, arg$FunDefn$2$, tmp100, arg$FunDefn$2$1, tmp101, tmp102, ctx3, argShapes;
           argShapes = param1;
           ctx3 = param2;
           actualClass = SpecializeHelpers.getActualClass(param0.value);
@@ -1730,48 +1414,48 @@ let SpecializeHelpers1;
             arg$FunDefn$1$ = defn.params;
             if (arg$FunDefn$0$ instanceof Block.Symbol.class) {
               ps = arg$FunDefn$1$;
-              tmp109 = globalThis.Object.freeze([
+              tmp99 = globalThis.Object.freeze([
                 argShapes
               ]);
-              SpecializeHelpers.specializeName("class$ctor$", false, ps, tmp109);
-              lambda6 = (undefined, function (p4, i, _) {
-                let lambda7;
-                lambda7 = (undefined, function (p21, j, _1) {
-                  let tmp113;
-                  tmp113 = Block.ValueRef(p21.sym);
-                  return ctx3.add(tmp113, argShapes[j])
+              SpecializeHelpers.specializeName("class$ctor$", false, ps, tmp99);
+              lambda5 = (undefined, function (p2, i, _) {
+                let lambda6;
+                lambda6 = (undefined, function (p21, j, _1) {
+                  let tmp103;
+                  tmp103 = Block.ValueRef(p21.sym);
+                  return ctx3.add(tmp103, argShapes[j])
                 });
-                return runtime.safeCall(p4.forEach(lambda7))
+                return runtime.safeCall(p2.forEach(lambda6))
               });
-              runtime.safeCall(ps.forEach(lambda6));
-              scrut29 = actualClass["preCtor$_instr"];
-              if (scrut29 === undefined) {
-                tmp110 = true;
+              runtime.safeCall(ps.forEach(lambda5));
+              scrut26 = actualClass["preCtor$_instr"];
+              if (scrut26 === undefined) {
+                tmp100 = true;
               } else {
-                tmp110 = false;
+                tmp100 = false;
               }
-              scrut30 = ! tmp110;
-              if (scrut30 === true) {
-                scrut31 = runtime.safeCall(actualClass["preCtor$_instr"]());
-                if (scrut31 instanceof Block.FunDefn.class) {
-                  arg$FunDefn$2$ = scrut31.body;
+              scrut27 = ! tmp100;
+              if (scrut27 === true) {
+                scrut28 = runtime.safeCall(actualClass["preCtor$_instr"]());
+                if (scrut28 instanceof Block.FunDefn.class) {
+                  arg$FunDefn$2$ = scrut28.body;
                   preCtorBody = arg$FunDefn$2$;
                   SpecializeHelpers.prop(ctx3, preCtorBody);
-                  scrut32 = actualClass["class$ctor$_instr"];
-                  if (scrut32 === undefined) {
-                    tmp111 = true;
+                  scrut29 = actualClass["class$ctor$_instr"];
+                  if (scrut29 === undefined) {
+                    tmp101 = true;
                   } else {
-                    tmp111 = false;
+                    tmp101 = false;
                   }
-                  scrut33 = ! tmp111;
-                  if (scrut33 === true) {
-                    scrut34 = runtime.safeCall(actualClass["class$ctor$_instr"]());
-                    if (scrut34 instanceof Block.FunDefn.class) {
-                      arg$FunDefn$2$1 = scrut34.body;
+                  scrut30 = ! tmp101;
+                  if (scrut30 === true) {
+                    scrut31 = runtime.safeCall(actualClass["class$ctor$_instr"]());
+                    if (scrut31 instanceof Block.FunDefn.class) {
+                      arg$FunDefn$2$1 = scrut31.body;
                       ctorBody = arg$FunDefn$2$1;
                       SpecializeHelpers.prop(ctx3, ctorBody);
-                      tmp112 = Option.Some(ps);
-                      return ShapeSet.mkClassFromMap(param0, ctx3.valDefnCtx, tmp112)
+                      tmp102 = Option.Some(ps);
+                      return ShapeSet.mkClassFromMap(param0, ctx3.valDefnCtx, tmp102)
                     }
                     throw runtime.safeCall(globalThis.Error("ctor not found in staged class"));
                   }
@@ -1787,16 +1471,6 @@ let SpecializeHelpers1;
       }
       break;
     }
-  } 
-  static isStagedClass(c) {
-    let scrut, tmp;
-    scrut = SpecializeHelpers.getClassGenMap(c);
-    if (scrut === undefined) {
-      tmp = true;
-      return ! tmp
-    }
-    tmp = false;
-    return ! tmp;
   } 
   static getGenMapName(name, isClass) {
     let tmp;
@@ -1913,7 +1587,7 @@ let SpecializeHelpers1;
         tmp8 = "Symbol(" + n2;
         return tmp8 + ")"
       }
-      throw runtime.safeCall(globalThis.Error(l));
+      throw globalThis.Object.freeze(new globalThis.Error("match error"));
     } else if (p instanceof Block.ValueLit.class) {
       arg$ValueLit$0$ = p.lit;
       lit = arg$ValueLit$0$;
@@ -1923,8 +1597,8 @@ let SpecializeHelpers1;
     }
     throw globalThis.Object.freeze(new globalThis.Error("match error"));
   } 
-  static sov(v, valueMap) {
-    let scrut, scrut1, scrut2, scrut3, scrut4, meta, paramsOpt, scrut5, scrut6, classSymbol, argsMap, scrut7, scrut8, scrut9, tmp, tmp1, tmp2, tmp3, tmp4, lambda, tmp5, tmp6, lambda1, tmp7;
+  static sov(v) {
+    let scrut, scrut1, scrut2, scrut3, scrut4, meta, clsName, paramsOpt, scrut5, classSymbol, argsMap, scrut6, scrut7, scrut8, tmp, tmp1, tmp2, tmp3, tmp4, lambda, tmp5, tmp6, tmp7, lambda1, tmp8;
     scrut = typeof v;
     switch (scrut) {
       case "number":
@@ -1936,7 +1610,7 @@ let SpecializeHelpers1;
     }
     scrut1 = globalThis.Array.isArray(v);
     if (scrut1 === true) {
-      tmp = v.map(SpecializeHelpers.sov, valueMap);
+      tmp = runtime.safeCall(v.map(SpecializeHelpers.sov));
       return ShapeSet.mkArr(tmp)
     }
     if (v === undefined) {
@@ -1952,18 +1626,18 @@ let SpecializeHelpers1;
       } else {
         tmp2 = false;
       }
-      scrut9 = ! tmp2;
-      if (scrut9 === true) {
+      scrut8 = ! tmp2;
+      if (scrut8 === true) {
         scrut4 = v.constructor[Predef.Symbols.definitionMetadata];
         if (scrut4 === undefined) {
           tmp3 = true;
         } else {
           tmp3 = false;
         }
-        scrut8 = ! tmp3;
-        if (scrut8 === true) {
+        scrut7 = ! tmp3;
+        if (scrut7 === true) {
           meta = v.constructor[Predef.Symbols.definitionMetadata];
-          meta[1];
+          clsName = meta[1];
           scrut5 = meta.length < 3;
           if (scrut5 === true) {
             tmp4 = Option.None;
@@ -1978,33 +1652,30 @@ let SpecializeHelpers1;
             tmp4 = Option.Some(tmp5);
           }
           paramsOpt = tmp4;
-          scrut6 = runtime.safeCall(valueMap.has(v.constructor));
-          if (scrut6 === true) {
-            classSymbol = runtime.safeCall(valueMap.get(v.constructor));
-            argsMap = globalThis.Object.freeze(new globalThis.Map());
-            if (paramsOpt instanceof Option.None.class) {
-              tmp6 = true;
-            } else {
-              tmp6 = false;
-            }
-            scrut7 = ! tmp6;
-            if (scrut7 === true) {
-              lambda1 = (undefined, function (n, _, _1) {
-                let tmp8;
-                tmp8 = SpecializeHelpers.sov(v[n], valueMap);
-                return argsMap.set(n, tmp8)
-              });
-              runtime.safeCall(meta[2].forEach(lambda1));
-              return ShapeSet.mkClassFromMap(classSymbol, argsMap, Option.None)
-            }
-            return ShapeSet.mkClassFromMap(classSymbol, argsMap, Option.None);
+          tmp6 = globalThis.Object.freeze([]);
+          classSymbol = Block.ConcreteClassSymbol(clsName, v.constructor, paramsOpt, tmp6);
+          argsMap = globalThis.Object.freeze(new globalThis.Map());
+          if (paramsOpt instanceof Option.None.class) {
+            tmp7 = true;
+          } else {
+            tmp7 = false;
           }
-          return runtime.assertFail("mlscript-compile/SpecializeHelpers.mls", "188");
+          scrut6 = ! tmp7;
+          if (scrut6 === true) {
+            lambda1 = (undefined, function (n, _, _1) {
+              let tmp9;
+              tmp9 = SpecializeHelpers.sov(v[n]);
+              return argsMap.set(n, tmp9)
+            });
+            runtime.safeCall(meta[2].forEach(lambda1));
+            return ShapeSet.mkClassFromMap(classSymbol, argsMap, Option.None)
+          }
+          return ShapeSet.mkClassFromMap(classSymbol, argsMap, Option.None);
         }
       }
     }
-    tmp7 = runtime.safeCall(v.toString());
-    throw globalThis.Error("unknown value from sov", tmp7);
+    tmp8 = runtime.safeCall(v.toString());
+    throw globalThis.Error("unknown value from sov", tmp8);
   } 
   static sop(ctx, p) {
     let scrut, s, name, clsSymb, scrut1, s1, name1, qual, scrut2, thisShape, qualShape, vals, scrut3, firstLen, scrut4, scrut5, qual1, fld, lit, arg$Some$0$, arg$ValueLit$0$, arg$DynSelect$0$, arg$DynSelect$1$, arg$Select$0$, arg$Select$1$, arg$Symbol$0$, arg$Some$0$1, arg$ValueRef$0$, arg$Some$0$2, lambda, lambda1, lambda2, lambda3, lambda4, lambda5, tmp, tmp1, tmp2, tmp3, tmp4;
@@ -2176,6 +1847,16 @@ let SpecializeHelpers1;
     }
     throw globalThis.Object.freeze(new globalThis.Error("match error"));
   } 
+  static isStagedClass(c) {
+    let scrut, tmp;
+    scrut = SpecializeHelpers.getClassGenMap(c);
+    if (scrut === undefined) {
+      tmp = true;
+      return ! tmp
+    }
+    tmp = false;
+    return ! tmp;
+  } 
   static fsplit(pss) {
     let knownMap, unkShape, lambda, tmp, tmp1, tmp2;
     knownMap = globalThis.Object.freeze(new globalThis.Map());
@@ -2190,7 +1871,7 @@ let SpecializeHelpers1;
           if (scrut === true) {
             tmp3 = runtime.safeCall(knownMap.get(sym));
             tmp4 = ShapeSet.lift(s);
-            tmp5 = ShapeSet.union2(tmp3, tmp4);
+            tmp5 = ShapeSet.union(tmp3, tmp4);
             knownMap.set(sym, tmp5);
             return acc
           }
@@ -2200,7 +1881,7 @@ let SpecializeHelpers1;
         }
       }
       tmp7 = ShapeSet.mkDyn();
-      return ShapeSet.union2(acc, tmp7)
+      return ShapeSet.union(acc, tmp7)
     });
     tmp = runtime.safeCall(Predef.foldl(lambda));
     tmp1 = ShapeSet.mkBot();
@@ -2358,9 +2039,10 @@ let SpecializeHelpers1;
   static sor(ctx, r) {
     return SpecializeHelpers.sorInstantiate_sorCall_sor_prop_specializeCtor(2, ctx, r, undefined, undefined, undefined)
   } 
-  static dispatchMethodCall(ctx, xOpt, implctOpt, p, f, args) {
-    let pss, argShapes, splitRes, knownMap, unkShape, knownMapArr, isRet, scrut, dfltMatch, i, x, x_, C_i, ss_i, genMap, f_gen, ret, retSym, retShape, callRes, i1, x1, x_1, scrut1, armsRet, armsAcc, totalStagedRetShape, dfltRet, scrut2, dfltMatch1, i2, x2, x_2, matchBody, scrut3, scrut4, totalRetShape, lambda, tmp, tmp1, tmp2, tmp3, arg$Some$0$, tmp4, tmp5, tmp6, arg$Some$0$1, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, arg$Some$0$2, tmp14, tmp15, arg$Some$0$3, tmp16, tmp17, tmp18, lambda1, lambda2, lambda3, tmp19, tmp20, tmp21, tmp22, tmp23, tmp24, arg$Some$0$4, tmp25, tmp26, tmp27, tmp28, tmp29, arg$Some$0$5, tmp30, tmp31, tmp32, tmp33, tmp34, tmp35, tmp36;
-    pss = SpecializeHelpers.sop(ctx, p);
+  static dispatchMethodCall(ctx, xOpt, implctOpt, symb, f, args) {
+    let pss, argShapes, splitRes, knownMap, unkShape, knownMapArr, isRet, scrut, dfltMatch, i, x, x_, C_i, ss_i, genMap, f_gen, ret, retSym, retShape, callRes, i1, x1, x_1, scrut1, armsRet, armsAcc, totalStagedRetShape, dfltRet, scrut2, dfltMatch1, i2, x2, x_2, matchBody, scrut3, scrut4, totalRetShape, tmp, lambda, tmp1, tmp2, tmp3, tmp4, tmp5, arg$Some$0$, tmp6, tmp7, tmp8, arg$Some$0$1, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, arg$Some$0$2, tmp17, tmp18, arg$Some$0$3, tmp19, tmp20, tmp21, lambda1, lambda2, lambda3, tmp22, tmp23, tmp24, tmp25, tmp26, tmp27, tmp28, arg$Some$0$4, tmp29, tmp30, tmp31, tmp32, tmp33, arg$Some$0$5, tmp34, tmp35, tmp36, tmp37, tmp38, tmp39, tmp40, tmp41;
+    tmp = Block.ValueRef(symb);
+    pss = SpecializeHelpers.sop(ctx, tmp);
     lambda = (undefined, function (a) {
       return SpecializeHelpers.sop(ctx, a.value)
     });
@@ -2368,48 +2050,49 @@ let SpecializeHelpers1;
     splitRes = SpecializeHelpers.fsplit(pss);
     knownMap = splitRes.knownMap;
     unkShape = splitRes.unkShape;
-    tmp = runtime.safeCall(knownMap.entries());
+    tmp1 = runtime.safeCall(knownMap.entries());
     knownMapArr = globalThis.Object.freeze([
-      ...tmp
+      ...tmp1
     ]);
     if (xOpt instanceof Option.None.class) {
-      tmp1 = true;
+      tmp2 = true;
     } else {
-      tmp1 = false;
+      tmp2 = false;
     }
-    isRet = tmp1;
+    isRet = tmp2;
     scrut = knownMap.size;
     switch (scrut) {
       case 0:
-        tmp2 = Block.Symbol(f);
-        tmp3 = Block.Select(p, tmp2);
-        dfltMatch = Block.Call(tmp3, args);
+        tmp3 = Block.ValueRef(symb);
+        tmp4 = Block.Symbol(f);
+        tmp5 = Block.Select(tmp3, tmp4);
+        dfltMatch = Block.Call(tmp5, args);
         if (isRet === true) {
           if (implctOpt instanceof Option.Some.class) {
             arg$Some$0$ = implctOpt.value;
             i = arg$Some$0$;
-            tmp4 = i;
+            tmp6 = i;
           } else {
-            tmp4 = false;
+            tmp6 = false;
           }
-          tmp5 = Block.Return(dfltMatch, tmp4);
-          tmp6 = ShapeSet.mkDyn();
+          tmp7 = Block.Return(dfltMatch, tmp6);
+          tmp8 = ShapeSet.mkDyn();
           return globalThis.Object.freeze([
-            tmp5,
-            tmp6
+            tmp7,
+            tmp8
           ])
         }
         if (xOpt instanceof Option.Some.class) {
           arg$Some$0$1 = xOpt.value;
           x_ = arg$Some$0$1;
-          tmp7 = x_;
-          x = tmp7;
-          tmp8 = Block.End();
-          tmp9 = Block.Assign(x, dfltMatch, tmp8);
-          tmp10 = ShapeSet.mkDyn();
+          tmp9 = x_;
+          x = tmp9;
+          tmp10 = Block.End();
+          tmp11 = Block.Assign(x, dfltMatch, tmp10);
+          tmp12 = ShapeSet.mkDyn();
           return globalThis.Object.freeze([
-            tmp9,
-            tmp10
+            tmp11,
+            tmp12
           ])
         }
         throw runtime.safeCall(globalThis.Error("unreachable"));
@@ -2420,36 +2103,37 @@ let SpecializeHelpers1;
           ss_i = knownMapArr[0][1];
           genMap = SpecializeHelpers.getClassGenMap(C_i.value);
           f_gen = runtime.safeCall(genMap.get(f));
-          tmp11 = runtime.safeCall(f_gen(ss_i));
-          ret = runtime.safeCall(tmp11(...argShapes));
+          tmp13 = runtime.safeCall(f_gen(ss_i));
+          ret = runtime.safeCall(tmp13(...argShapes));
           retSym = ret[0];
           retShape = ret[1];
-          tmp12 = Block.Symbol(retSym);
-          tmp13 = Block.Select(p, tmp12);
-          callRes = Block.Call(tmp13, args);
+          tmp14 = Block.ValueRef(symb);
+          tmp15 = Block.Symbol(retSym);
+          tmp16 = Block.Select(tmp14, tmp15);
+          callRes = Block.Call(tmp16, args);
           if (isRet === true) {
             if (implctOpt instanceof Option.Some.class) {
               arg$Some$0$2 = implctOpt.value;
               i1 = arg$Some$0$2;
-              tmp14 = i1;
+              tmp17 = i1;
             } else {
-              tmp14 = false;
+              tmp17 = false;
             }
-            tmp15 = Block.Return(callRes, tmp14);
+            tmp18 = Block.Return(callRes, tmp17);
             return globalThis.Object.freeze([
-              tmp15,
+              tmp18,
               retShape
             ])
           }
           if (xOpt instanceof Option.Some.class) {
             arg$Some$0$3 = xOpt.value;
             x_1 = arg$Some$0$3;
-            tmp16 = x_1;
-            x1 = tmp16;
-            tmp17 = Block.End();
-            tmp18 = Block.Assign(x1, callRes, tmp17);
+            tmp19 = x_1;
+            x1 = tmp19;
+            tmp20 = Block.End();
+            tmp21 = Block.Assign(x1, callRes, tmp20);
             return globalThis.Object.freeze([
-              tmp18,
+              tmp21,
               retShape
             ])
           }
@@ -2458,47 +2142,50 @@ let SpecializeHelpers1;
         break;
     }
     lambda1 = (undefined, function (entry) {
-      let C_i1, ss_i1, genMap1, f_gen1, retSym1, retShape1, callRes1, i3, x3, x_3, tmp37, tmp38, tmp39, tmp40, tmp41, tmp42, tmp43, arg$Some$0$6, tmp44, tmp45, tmp46, arg$Some$0$7, tmp47, tmp48, tmp49, tmp50, tmp51;
+      let C_i1, ss_i1, genMap1, f_gen1, retSym1, retShape1, callRes1, i3, x3, x_3, tmp42, tmp43, tmp44, tmp45, tmp46, tmp47, tmp48, tmp49, tmp50, arg$Some$0$6, tmp51, tmp52, tmp53, arg$Some$0$7, tmp54, tmp55, tmp56, tmp57, tmp58, tmp59;
       C_i1 = entry[0];
       ss_i1 = entry[1];
       genMap1 = SpecializeHelpers.getClassGenMap(C_i1.value);
       f_gen1 = runtime.safeCall(genMap1.get(f));
-      tmp37 = runtime.safeCall(f_gen1(ss_i1));
-      tmp38 = runtime.safeCall(tmp37(...argShapes));
-      retSym1 = tmp38[0];
-      tmp39 = runtime.safeCall(f_gen1(ss_i1));
-      tmp40 = runtime.safeCall(tmp39(...argShapes));
-      retShape1 = tmp40[1];
-      tmp41 = Block.Symbol(retSym1);
-      tmp42 = Block.Select(p, tmp41);
-      callRes1 = Block.Call(tmp42, args);
+      tmp42 = runtime.safeCall(f_gen1(ss_i1));
+      tmp43 = runtime.safeCall(tmp42(...argShapes));
+      retSym1 = tmp43[0];
+      tmp44 = runtime.safeCall(f_gen1(ss_i1));
+      tmp45 = runtime.safeCall(tmp44(...argShapes));
+      retShape1 = tmp45[1];
+      tmp46 = Block.ValueRef(symb);
+      tmp47 = Block.Symbol(retSym1);
+      tmp48 = Block.Select(tmp46, tmp47);
+      callRes1 = Block.Call(tmp48, args);
       if (isRet === true) {
-        tmp43 = Block.Cls(C_i1, p);
+        tmp49 = Block.ValueRef(symb);
+        tmp50 = Block.Cls(C_i1, tmp49);
         if (implctOpt instanceof Option.Some.class) {
           arg$Some$0$6 = implctOpt.value;
           i3 = arg$Some$0$6;
-          tmp44 = i3;
+          tmp51 = i3;
         } else {
-          tmp44 = false;
+          tmp51 = false;
         }
-        tmp45 = Block.Return(callRes1, tmp44);
-        tmp46 = Block.Arm(tmp43, tmp45);
+        tmp52 = Block.Return(callRes1, tmp51);
+        tmp53 = Block.Arm(tmp50, tmp52);
         return globalThis.Object.freeze([
-          tmp46,
+          tmp53,
           retShape1
         ])
       }
       if (xOpt instanceof Option.Some.class) {
         arg$Some$0$7 = xOpt.value;
         x_3 = arg$Some$0$7;
-        tmp47 = x_3;
-        x3 = tmp47;
-        tmp48 = Block.Cls(C_i1, p);
-        tmp49 = Block.End();
-        tmp50 = Block.Assign(x3, callRes1, tmp49);
-        tmp51 = Block.Arm(tmp48, tmp50);
+        tmp54 = x_3;
+        x3 = tmp54;
+        tmp55 = Block.ValueRef(symb);
+        tmp56 = Block.Cls(C_i1, tmp55);
+        tmp57 = Block.End();
+        tmp58 = Block.Assign(x3, callRes1, tmp57);
+        tmp59 = Block.Arm(tmp56, tmp58);
         return globalThis.Object.freeze([
-          tmp51,
+          tmp59,
           retShape1
         ])
       }
@@ -2510,72 +2197,74 @@ let SpecializeHelpers1;
     });
     armsAcc = runtime.safeCall(armsRet.map(lambda2));
     lambda3 = (undefined, function (acc, x3) {
-      return ShapeSet.union2(acc, x3[1])
+      return ShapeSet.union(acc, x3[1])
     });
-    tmp19 = runtime.safeCall(Predef.foldl(lambda3));
-    tmp20 = ShapeSet.mkBot();
-    totalStagedRetShape = runtime.safeCall(tmp19(tmp20, ...armsRet));
+    tmp22 = runtime.safeCall(Predef.foldl(lambda3));
+    tmp23 = ShapeSet.mkBot();
+    totalStagedRetShape = runtime.safeCall(tmp22(tmp23, ...armsRet));
     scrut2 = runtime.safeCall(unkShape.isEmpty());
     if (scrut2 === true) {
-      tmp21 = ShapeSet.mkBot();
-      tmp22 = globalThis.Object.freeze([
+      tmp24 = ShapeSet.mkBot();
+      tmp25 = globalThis.Object.freeze([
         Option.None,
-        tmp21
+        tmp24
       ]);
     } else {
-      tmp23 = Block.Symbol(f);
-      tmp24 = Block.Select(p, tmp23);
-      dfltMatch1 = Block.Call(tmp24, args);
+      tmp26 = Block.ValueRef(symb);
+      tmp27 = Block.Symbol(f);
+      tmp28 = Block.Select(tmp26, tmp27);
+      dfltMatch1 = Block.Call(tmp28, args);
       if (isRet === true) {
         if (implctOpt instanceof Option.Some.class) {
           arg$Some$0$4 = implctOpt.value;
           i2 = arg$Some$0$4;
-          tmp25 = i2;
+          tmp29 = i2;
         } else {
-          tmp25 = false;
+          tmp29 = false;
         }
-        tmp26 = Block.Return(dfltMatch1, tmp25);
-        tmp27 = Option.Some(tmp26);
-        tmp28 = ShapeSet.mkDyn();
-        tmp29 = globalThis.Object.freeze([
-          tmp27,
-          tmp28
+        tmp30 = Block.Return(dfltMatch1, tmp29);
+        tmp31 = Option.Some(tmp30);
+        tmp32 = ShapeSet.mkDyn();
+        tmp33 = globalThis.Object.freeze([
+          tmp31,
+          tmp32
         ]);
       } else {
         if (xOpt instanceof Option.Some.class) {
           arg$Some$0$5 = xOpt.value;
           x_2 = arg$Some$0$5;
-          tmp30 = x_2;
-          x2 = tmp30;
-          tmp31 = Block.End();
-          tmp32 = Block.Assign(x2, dfltMatch1, tmp31);
-          tmp33 = Option.Some(tmp32);
-          tmp34 = ShapeSet.mkDyn();
-          tmp29 = globalThis.Object.freeze([
-            tmp33,
-            tmp34
+          tmp34 = x_2;
+          x2 = tmp34;
+          tmp35 = Block.End();
+          tmp36 = Block.Assign(x2, dfltMatch1, tmp35);
+          tmp37 = Option.Some(tmp36);
+          tmp38 = ShapeSet.mkDyn();
+          tmp33 = globalThis.Object.freeze([
+            tmp37,
+            tmp38
           ]);
         } else {
           throw runtime.safeCall(globalThis.Error("unreachable"))
         }
       }
-      tmp22 = tmp29;
+      tmp25 = tmp33;
     }
-    dfltRet = tmp22;
+    dfltRet = tmp25;
     split_root$: {
       scrut3 = knownMap.size;
       if (scrut3 === 1) {
         scrut4 = runtime.safeCall(unkShape.isEmpty());
         if (scrut4 === true) {
-          tmp35 = armsAcc[0].body;
+          tmp39 = armsAcc[0].body;
           break split_root$
         }
       }
-      tmp36 = Block.End();
-      tmp35 = Block.Match(p, armsAcc, dfltRet[0], tmp36);
+      tmp40 = Block.ValueRef(symb);
+      tmp41 = Block.End();
+      tmp39 = Block.Match(tmp40, armsAcc, dfltRet[0], tmp41);
     }
-    matchBody = tmp35;
-    totalRetShape = ShapeSet.union2(totalStagedRetShape, dfltRet[1]);
+    matchBody = tmp39;
+    totalRetShape = ShapeSet.union(totalStagedRetShape, dfltRet[1]);
     return globalThis.Object.freeze([
       matchBody,
       totalRetShape
@@ -2695,7 +2384,7 @@ let SpecializeHelpers1;
     return tmp + tmp2;
   } 
   static specialize(cache, funName, dflt, shapes) {
-    let defn, body, ps, isMethod, scrut, newName, scrut1, x, paramShapes, ctx, res, bodyWithScoped, actualRetShape, finalBody, scrut2, allocs, v2p, entry, arg$FunDefn$0$, arg$FunDefn$1$, arg$FunDefn$2$, tmp, arg$Some$0$, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, lambda, tmp8, tmp9, lambda1, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20;
+    let defn, body, ps, isMethod, scrut, newName, scrut1, x, paramShapes, ctx, res, bodyWithScoped, actualRetShape, finalBody, scrut2, allocs, v2p, entry, arg$FunDefn$0$, arg$FunDefn$1$, arg$FunDefn$2$, tmp, arg$Some$0$, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, tmp9, lambda, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20;
     defn = runtime.safeCall(dflt());
     if (defn instanceof Block.FunDefn.class) {
       arg$FunDefn$0$ = defn.sym;
@@ -2730,17 +2419,22 @@ let SpecializeHelpers1;
           if (isMethod === true) {
             tmp2 = globalThis.Object.freeze(new globalThis.Map());
             tmp3 = globalThis.Object.freeze(new globalThis.Map());
-            tmp4 = globalThis.Object.freeze(new globalThis.Map());
-            tmp5 = [];
-            tmp6 = Option.Some(shapes[0][0]);
-            tmp7 = SpecializeHelpers.Ctx(tmp2, tmp3, tmp4, tmp5, tmp6);
+            tmp4 = [];
+            tmp5 = Option.Some(shapes[0][0]);
+            tmp6 = SpecializeHelpers.Ctx(tmp2, tmp3, tmp4, tmp5);
           } else {
-            tmp7 = SpecializeHelpers.Ctx.class.empty();
+            tmp6 = SpecializeHelpers.Ctx.class.empty();
           }
-          ctx = tmp7;
+          ctx = tmp6;
+          if (isMethod === true) {
+            tmp7 = Block.Symbol("_this");
+            tmp8 = Block.ValueRef(tmp7);
+            tmp9 = Option.Some(shapes[0][0]);
+            ctx.add(tmp8, tmp9);
+          }
           lambda = (undefined, function (p, i, _) {
-            let lambda2;
-            lambda2 = (undefined, function (p2, j, _1) {
+            let lambda1;
+            lambda1 = (undefined, function (p2, j, _1) {
               let shape, scrut3, scrut4, arg$Some$0$1, tmp21, tmp22, tmp23, tmp24;
               scrut3 = p2.constraint;
               if (scrut3 instanceof Option.Some.class) {
@@ -2765,30 +2459,9 @@ let SpecializeHelpers1;
               tmp24 = Block.ValueRef(p2.sym);
               return ctx.add(tmp24, shape)
             });
-            return runtime.safeCall(p.forEach(lambda2))
+            return runtime.safeCall(p.forEach(lambda1))
           });
           runtime.safeCall(ps.forEach(lambda));
-          tmp8 = globalThis.Object.freeze(new SpecializeHelpers.ValueCollection.class(ctx.valueNameCtx));
-          runtime.safeCall(tmp8.showBlock(body));
-          tmp9 = runtime.safeCall(ctx.ctx.values());
-          lambda1 = (undefined, function (_0) {
-            let tmp21, lambda2, tmp22, lambda3;
-            tmp21 = runtime.safeCall(_0.shapeset.values());
-            lambda2 = (undefined, function (_01) {
-              if (_01 instanceof Shape.Class.class) {
-                return true
-              }
-              return false;
-            });
-            tmp22 = runtime.safeCall(tmp21.filter(lambda2));
-            lambda3 = (undefined, function (s) {
-              let tmp23;
-              tmp23 = SpecializeHelpers.getActualClass(s.sym.value);
-              return ctx.valueNameCtx.set(tmp23, s.sym)
-            });
-            return runtime.safeCall(tmp22.forEach(lambda3))
-          });
-          runtime.safeCall(tmp9.forEach(lambda1));
           tmp10 = Block.Symbol(newName);
           tmp11 = Block.FunDefn(tmp10, ps, body);
           tmp12 = ShapeSet.mkDyn();
@@ -2804,7 +2477,7 @@ let SpecializeHelpers1;
           if (scrut2 === true) {
             allocs = [];
             tmp14 = ShapeSet.valOfSet(actualRetShape);
-            v2p = ShapeSet.val2path(tmp14, allocs, ctx.valueNameCtx);
+            v2p = ShapeSet.val2path(tmp14, allocs);
             tmp15 = Block.Return(v2p[1], false);
             tmp16 = Block.concat(v2p[0], tmp15);
             tmp17 = SpecializeHelpers.wrapScoped(allocs, tmp16);

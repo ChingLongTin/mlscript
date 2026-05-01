@@ -109,7 +109,7 @@ let ShapeSet2;
     tmp1 = globalThis.Object.freeze(new globalThis.Map(tmp));
     return ShapeSet.ShapeSet(tmp1)
   } 
-  static union2(s1, s2) {
+  static union(s1, s2) {
     let scrut, scrut1, tmp, tmp1;
     scrut = s1.isDyn();
     if (scrut === true) {
@@ -125,17 +125,6 @@ let ShapeSet2;
     ]);
     tmp1 = globalThis.Object.freeze(new globalThis.Map(tmp));
     return ShapeSet.ShapeSet(tmp1);
-  } 
-  static union(...s) {
-    let scrut, lambda;
-    scrut = s.length;
-    if (scrut === 0) {
-      return ShapeSet.ShapeSet.class.empty
-    }
-    lambda = (undefined, function (acc, next) {
-      return ShapeSet.union2(acc, next)
-    });
-    return runtime.safeCall(s.reduce(lambda));
   } 
   static flat(arr) {
     let lambda, tmp, tmp1, tmp2;
@@ -215,13 +204,11 @@ let ShapeSet2;
     return Predef.pipeInto(tmp2, ShapeSet.liftMany)
   } 
   static mkClassFromMap(sym, paramsMap, psOpt) {
-    let name, redir, value, auxParams, entries, keys, params, newSym, arg$ConcreteClassSymbol$0$, arg$ConcreteClassSymbol$1$, arg$ConcreteClassSymbol$3$, arg$ConcreteClassSymbol$4$, tmp, lambda, lambda1, tmp1, lambda2, tmp2, tmp3, lambda3, tmp4;
+    let name, value, auxParams, entries, keys, params, newSym, arg$ConcreteClassSymbol$0$, arg$ConcreteClassSymbol$1$, arg$ConcreteClassSymbol$3$, tmp, lambda, lambda1, tmp1, lambda2, tmp2, tmp3, lambda3, tmp4;
     if (sym instanceof Block.ConcreteClassSymbol.class) {
       arg$ConcreteClassSymbol$0$ = sym.name;
       arg$ConcreteClassSymbol$1$ = sym.value;
       arg$ConcreteClassSymbol$3$ = sym.auxParams;
-      arg$ConcreteClassSymbol$4$ = sym.redirect;
-      redir = arg$ConcreteClassSymbol$4$;
       auxParams = arg$ConcreteClassSymbol$3$;
       value = arg$ConcreteClassSymbol$1$;
       name = arg$ConcreteClassSymbol$0$;
@@ -253,7 +240,7 @@ let ShapeSet2;
       });
       params = runtime.safeCall(entries.map(lambda1));
       tmp1 = Option.Some(keys);
-      newSym = Block.ConcreteClassSymbol(name, value, tmp1, auxParams, redir);
+      newSym = Block.ConcreteClassSymbol(name, value, tmp1, auxParams);
       lambda2 = (undefined, function (_0) {
         let tmp5;
         tmp5 = runtime.safeCall(_0.shapeset.values());
@@ -582,8 +569,8 @@ let ShapeSet2;
     tmp3 = tmp1 + tmp2;
     return Block.Symbol(tmp3)
   } 
-  static val2path(v, allocs, valueMap) {
-    let scrut, scrut1, mapped, blocks, paths, tupSym, tupAssign, fullBlock, scrut2, scrut3, scrut4, meta, scrut5, classSym, paramNames, scrut6, ps, mapped1, blocks1, paths1, objSym, objAssign, fullBlock1, scrut7, scrut8, scrut9, tmp, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, lambda, lambda1, lambda2, lambda3, tmp8, tmp9, tmp10, lambda4, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, lambda5, lambda6, lambda7, tmp18, lambda8, tmp19, tmp20, tmp21, lambda9, tmp22, tmp23, tmp24, tmp25;
+  static val2path(v, allocs) {
+    let scrut, scrut1, mapped, blocks, paths, tupSym, tupAssign, fullBlock, scrut2, scrut3, scrut4, meta, clsName, paramNames, scrut5, ps, classSym, mapped1, blocks1, paths1, objSym, objAssign, fullBlock1, scrut6, scrut7, scrut8, tmp, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, lambda, lambda1, lambda2, lambda3, tmp8, tmp9, tmp10, lambda4, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, lambda5, lambda6, lambda7, tmp19, lambda8, tmp20, tmp21, tmp22, lambda9, tmp23, tmp24, tmp25, tmp26;
     tmp = typeof v;
     tmp1 = Predef.equals(tmp, "number");
     if (tmp1 === false) {
@@ -610,7 +597,7 @@ let ShapeSet2;
     scrut1 = globalThis.Array.isArray(v);
     if (scrut1 === true) {
       lambda = (undefined, function (_0) {
-        return ShapeSet.val2path(_0, allocs, valueMap)
+        return ShapeSet.val2path(_0, allocs)
       });
       mapped = runtime.safeCall(v.map(lambda));
       lambda1 = (undefined, function (_0) {
@@ -653,80 +640,77 @@ let ShapeSet2;
       } else {
         tmp14 = false;
       }
-      scrut9 = ! tmp14;
-      if (scrut9 === true) {
+      scrut8 = ! tmp14;
+      if (scrut8 === true) {
         scrut3 = v.constructor;
         if (scrut3 === undefined) {
           tmp15 = true;
         } else {
           tmp15 = false;
         }
-        scrut8 = ! tmp15;
-        if (scrut8 === true) {
+        scrut7 = ! tmp15;
+        if (scrut7 === true) {
           scrut4 = v.constructor[Predef.Symbols.definitionMetadata];
           if (scrut4 === undefined) {
             tmp16 = true;
           } else {
             tmp16 = false;
           }
-          scrut7 = ! tmp16;
-          if (scrut7 === true) {
+          scrut6 = ! tmp16;
+          if (scrut6 === true) {
             meta = v.constructor[Predef.Symbols.definitionMetadata];
-            scrut5 = runtime.safeCall(valueMap.has(v.constructor));
-            if (scrut5 === true) {
-              classSym = runtime.safeCall(valueMap.get(v.constructor));
-              classSym.nme;
-              scrut6 = meta[2];
-              if (scrut6 === undefined) {
-                tmp17 = globalThis.Object.freeze([]);
-              } else {
-                ps = scrut6;
-                tmp17 = ps;
-              }
-              paramNames = tmp17;
-              lambda5 = (undefined, function (fld, _, _1) {
-                return ShapeSet.val2path(v[fld], allocs, valueMap)
-              });
-              mapped1 = runtime.safeCall(paramNames.map(lambda5));
-              lambda6 = (undefined, function (_0) {
-                return _0[0]
-              });
-              blocks1 = runtime.safeCall(mapped1.map(lambda6));
-              lambda7 = (undefined, function (_0) {
-                return _0[1]
-              });
-              paths1 = runtime.safeCall(mapped1.map(lambda7));
-              objSym = ShapeSet.freshId("obj");
-              runtime.safeCall(allocs.push(objSym));
-              tmp18 = Block.ValueRef(classSym);
-              lambda8 = (undefined, function (_0) {
-                return Block.Arg(_0)
-              });
-              tmp19 = runtime.safeCall(paths1.map(lambda8));
-              tmp20 = Block.Instantiate(tmp18, tmp19);
-              tmp21 = Block.End();
-              objAssign = Block.Assign(objSym, tmp20, tmp21);
-              lambda9 = (undefined, function (b, acc) {
-                return Block.concat(acc, b)
-              });
-              tmp22 = runtime.safeCall(Predef.fold(lambda9));
-              fullBlock1 = runtime.safeCall(tmp22(objAssign, ...blocks1));
-              tmp23 = Block.ValueRef(objSym);
-              return globalThis.Object.freeze([
-                fullBlock1,
-                tmp23
-              ])
+            clsName = meta[1];
+            scrut5 = meta[2];
+            if (scrut5 === undefined) {
+              tmp17 = globalThis.Object.freeze([]);
+            } else {
+              ps = scrut5;
+              tmp17 = ps;
             }
-            return runtime.assertFail("mlscript-compile/ShapeSet.mls", "196");
+            paramNames = tmp17;
+            tmp18 = globalThis.Object.freeze([]);
+            classSym = Block.ConcreteClassSymbol(clsName, undefined, Option.None, tmp18);
+            lambda5 = (undefined, function (fld, _, _1) {
+              return ShapeSet.val2path(v[fld], allocs)
+            });
+            mapped1 = runtime.safeCall(paramNames.map(lambda5));
+            lambda6 = (undefined, function (_0) {
+              return _0[0]
+            });
+            blocks1 = runtime.safeCall(mapped1.map(lambda6));
+            lambda7 = (undefined, function (_0) {
+              return _0[1]
+            });
+            paths1 = runtime.safeCall(mapped1.map(lambda7));
+            objSym = ShapeSet.freshId("obj");
+            runtime.safeCall(allocs.push(objSym));
+            tmp19 = Block.ValueRef(classSym);
+            lambda8 = (undefined, function (_0) {
+              return Block.Arg(_0)
+            });
+            tmp20 = runtime.safeCall(paths1.map(lambda8));
+            tmp21 = Block.Instantiate(tmp19, tmp20);
+            tmp22 = Block.End();
+            objAssign = Block.Assign(objSym, tmp21, tmp22);
+            lambda9 = (undefined, function (b, acc) {
+              return Block.concat(acc, b)
+            });
+            tmp23 = runtime.safeCall(Predef.fold(lambda9));
+            fullBlock1 = runtime.safeCall(tmp23(objAssign, ...blocks1));
+            tmp24 = Block.ValueRef(objSym);
+            return globalThis.Object.freeze([
+              fullBlock1,
+              tmp24
+            ])
           }
         }
       }
     }
-    tmp24 = Block.End();
-    tmp25 = Block.ValueLit(42);
+    tmp25 = Block.End();
+    tmp26 = Block.ValueLit(42);
     return globalThis.Object.freeze([
-      tmp24,
-      tmp25
+      tmp25,
+      tmp26
     ]);
   }
   toString() { return runtime.render(this); }

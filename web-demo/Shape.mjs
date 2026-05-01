@@ -341,7 +341,7 @@ let Shape2;
           c1 = arg$Class$0$;
           if (c1 instanceof Block.ConcreteClassSymbol.class) {
             if (c2 instanceof Block.ConcreteClassSymbol.class) {
-              scrut4 = c1 == c2;
+              scrut4 = c1.value == c2.value;
               if (scrut4 === true) {
                 return globalThis.Object.freeze([
                   s
@@ -452,7 +452,7 @@ let Shape2;
           c1 = arg$Class$0$;
           if (c1 instanceof Block.ConcreteClassSymbol.class) {
             if (c2 instanceof Block.ConcreteClassSymbol.class) {
-              scrut4 = c1 == c2;
+              scrut4 = c1.value == c2.value;
               if (scrut4 === true) {
                 return globalThis.Object.freeze([])
               }
