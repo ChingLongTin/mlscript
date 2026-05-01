@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="index.css">
+    <title>MLscript Dynamic Staging Playground</title>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="page-header">
+        <p class="eyebrow">Browser Playground</p>
+        <h1>Dynamic Staging Playground</h1>
+        <p class="intro">
+          Compile MLscript programs in the browser, inspect the lowered artifacts, then write a
+          small MLscript runner against the generated module without leaving the page.
+        </p>
+      </header>
+
+      <main id="playground">
+        <section class="card card-program" aria-labelledby="program-heading">
+          <div class="card-header">
+            <div>
+              <p class="card-kicker">Program</p>
+              <h2 id="program-heading">Author or load a demo</h2>
+            </div>
+            <div class="toolbar">
+              <button id="compile-button" type="button">Compile</button>
+              <label class="visually-hidden" for="demo-select">Choose a demo</label>
+              <select id="demo-select" name="demo-select">
+              </select>
+            </div>
+          </div>
+          <div class="card-body">
+            <textarea id="source-editor" class="editor-surface" spellcheck="false" autocapitalize="off" aria-label="Source editor"></textarea>
+          </div>
+        </section>
+
+        <section class="card card-artifacts" aria-labelledby="artifacts-heading">
+          <div class="card-header">
+            <div>
+              <p class="card-kicker">Specialized Code</p>
+              <h2 id="artifacts-heading">Inspect specialized code</h2>
+            </div>
+            <p id="compile-status" class="card-copy">Choose a demo or edit the source, then compile to inspect the specialized code output.</p>
+          </div>
+          <div class="card-body">
+            <pre id="specialized-code" class="output-surface" role="textbox" aria-label="Specialized code" aria-readonly="true" tabindex="0">Specialized code will appear here after compilation.</pre>
+          </div>
+        </section>
+
+        <section class="card card-runner" aria-labelledby="runner-heading">
+          <div class="card-header">
+            <div>
+              <p class="card-kicker">Use Generated Code</p>
+              <h2 id="runner-heading">Write follow-up code</h2>
+            </div>
+            <div class="toolbar">
+              <button id="run-button" type="button">Run</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <textarea id="runner-editor" class="editor-surface" spellcheck="false" autocapitalize="off" aria-label="Generated code usage editor">// Use the specialized module here.</textarea>
+          </div>
+        </section>
+
+        <section class="card card-output" aria-labelledby="output-heading">
+          <div class="card-header">
+            <div>
+              <p class="card-kicker">Output</p>
+              <h2 id="output-heading">Inspect runtime results</h2>
+            </div>
+            <p id="run-status" class="card-copy">Run the MLscript snippet from panel three to capture browser output here.</p>
+          </div>
+          <div class="card-body">
+            <pre id="runner-output" class="output-surface terminal-output" role="status" aria-live="polite" aria-atomic="true" aria-label="Program output" aria-readonly="true" tabindex="0">Browser execution output will appear here after you run the MLscript snippet from panel three.</pre>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="./main.mjs"></script>
+  </body>
+</html>
