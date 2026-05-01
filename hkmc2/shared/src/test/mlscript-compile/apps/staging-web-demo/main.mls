@@ -85,20 +85,22 @@ parseButton.addEventListener of "click", event =>
   set outputPanel.textContent = "Compiling..."
   Runtime.try_catch of
     () =>
-      let statements = []
+      let propStat = []
+      let showStat = []
       while
         let match = stagedNamesPattern.exec(editor.value)
         not (match is null) do
           if match.(1) is
-            "module" then statements.push(match.(2) + ".show()")
-            "class" then statements.push(match.(2) + ".\"class\".show()")
-      console.log(statements)
-      if statements.length is 0 then set statusPanel.textContent = "No staged module found." else ()
+            "module" then propStat.push(match.(2) + ".propagate()"); showStat.push(match.(2) + ".show()")
+            "class" then propStat.push(match.(2) + ".\"class\".propagate()"); showStat.push(match.(2) + ".\"class\".show()")
+      console.log(propStat, showStat)
+      if showStat.length is 0 then set statusPanel.textContent = "No staged module found." else ()
       let begin = globalThis.performance.now()
       let res = MLscript.compile of
         traces:
           codegen: false
-        editor.value + "\n" + "[" + statements.join(", ") + "].join(\"\\n\")"
+        editor.value + "\n" + propStat.join("\n") + "\n" + "[" + showStat.join(", ") + "].join(\"\\n\")"
+      console.log(editor.value + "\n" + propStat.join("\n") + "\n" + "[" + showStat.join(", ") + "].join(\"\\n\")")
       let sections = mut []
       let generatedVars = res.codegen.vars.trim()
       let generatedCode = res.codegen.code.trim()

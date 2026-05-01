@@ -112,35 +112,40 @@ let Main1;
       let lambda5, lambda6;
       Main.#outputPanel.textContent = "Compiling...";
       lambda5 = (undefined, function () {
-        let statements, scrut, begin, res, codegen, sections, generatedVars, generatedCode, compiledCode, scrut1, hasGeneratedCode, res1, end, scrut2, scrut3, scrut4, tmp, tmp1, tmp2, tmp3, tmp4, tmp5, rcd, tmp6, tmp7, tmp8, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19;
-        statements = ([]);
+        let propStat, showStat, scrut, begin, res, codegen, sections, generatedVars, generatedCode, compiledCode, scrut1, hasGeneratedCode, res1, end, scrut2, scrut3, scrut4, tmp, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7, tmp8, rcd, tmp9, tmp10, tmp11, tmp12, tmp13, tmp14, tmp15, tmp16, tmp17, tmp18, tmp19, tmp20, tmp21, tmp22, tmp23, tmp24, tmp25, tmp26, tmp27, tmp28, tmp29, tmp30;
+        propStat = ([]);
+        showStat = ([]);
         lbl: while (true) {
-          let match, scrut5, scrut6, tmp20, tmp21, tmp22;
+          let match, scrut5, scrut6, tmp31, tmp32, tmp33, tmp34, tmp35;
           match = runtime.safeCall(Main.#stagedNamesPattern.exec(Main.#editor.value));
           if (match === null) {
-            tmp20 = true;
+            tmp31 = true;
           } else {
-            tmp20 = false;
+            tmp31 = false;
           }
-          scrut5 = ! tmp20;
+          scrut5 = ! tmp31;
           if (scrut5 === true) {
             scrut6 = match[1];
             switch (scrut6) {
               case "module":
-                tmp21 = match[2] + ".show()";
-                runtime.safeCall(statements.push(tmp21));
+                tmp32 = match[2] + ".propagate()";
+                runtime.safeCall(propStat.push(tmp32));
+                tmp33 = match[2] + ".show()";
+                runtime.safeCall(showStat.push(tmp33));
                 continue lbl;
               case "class":
-                tmp22 = match[2] + ".\"class\".show()";
-                runtime.safeCall(statements.push(tmp22));
+                tmp34 = match[2] + ".\"class\".propagate()";
+                runtime.safeCall(propStat.push(tmp34));
+                tmp35 = match[2] + ".\"class\".show()";
+                runtime.safeCall(showStat.push(tmp35));
                 continue lbl;
             }
             throw (new globalThis.Error("match error"))
           }
           break;
         }
-        runtime.safeCall(globalThis.console.log(statements));
-        scrut = statements.length;
+        globalThis.console.log(propStat, showStat);
+        scrut = showStat.length;
         if (scrut === 0) {
           Main.#statusPanel.textContent = "No staged module found.";
         }
@@ -150,70 +155,82 @@ let Main1;
           codegen: codegen
         });
         tmp1 = Main.#editor.value + "\n";
-        tmp2 = tmp1 + "[";
-        tmp3 = runtime.safeCall(statements.join(", "));
-        tmp4 = tmp2 + tmp3;
-        tmp5 = tmp4 + "].join(\"\\n\")";
+        tmp2 = runtime.safeCall(propStat.join("\n"));
+        tmp3 = tmp1 + tmp2;
+        tmp4 = tmp3 + "\n";
+        tmp5 = tmp4 + "[";
+        tmp6 = runtime.safeCall(showStat.join(", "));
+        tmp7 = tmp5 + tmp6;
+        tmp8 = tmp7 + "].join(\"\\n\")";
         rcd = ({
           traces: tmp
         });
-        res = MLscript.compile(tmp5, rcd);
+        res = MLscript.compile(tmp8, rcd);
+        tmp9 = Main.#editor.value + "\n";
+        tmp10 = runtime.safeCall(propStat.join("\n"));
+        tmp11 = tmp9 + tmp10;
+        tmp12 = tmp11 + "\n";
+        tmp13 = tmp12 + "[";
+        tmp14 = runtime.safeCall(showStat.join(", "));
+        tmp15 = tmp13 + tmp14;
+        tmp16 = tmp15 + "].join(\"\\n\")";
+        runtime.safeCall(globalThis.console.log(tmp16));
         sections = [];
         generatedVars = runtime.safeCall(res.codegen.vars.trim());
         generatedCode = runtime.safeCall(res.codegen.code.trim());
-        tmp6 = Predef.nequals(generatedVars, "");
-        if (tmp6 === true) {
-          tmp7 = Predef.nequals(generatedCode, "");
+        tmp17 = Predef.nequals(generatedVars, "");
+        if (tmp17 === true) {
+          tmp18 = Predef.nequals(generatedCode, "");
         } else {
-          tmp7 = false;
+          tmp18 = false;
         }
-        scrut1 = tmp7;
+        scrut1 = tmp18;
         if (scrut1 === true) {
-          tmp8 = generatedVars + "\n\n";
-          tmp9 = tmp8 + generatedCode;
+          tmp19 = generatedVars + "\n\n";
+          tmp20 = tmp19 + generatedCode;
         } else {
-          tmp9 = generatedVars + generatedCode;
+          tmp20 = generatedVars + generatedCode;
         }
-        compiledCode = tmp9;
+        compiledCode = tmp20;
         hasGeneratedCode = Predef.nequals(compiledCode, "");
         if (hasGeneratedCode === true) {
-          tmp10 = generatedVars + generatedCode;
-          runtime.safeCall(globalThis.console.log(tmp10));
-          tmp11 = generatedVars + generatedCode;
-          res1 = runtime.safeCall(eval(tmp11));
+          tmp21 = generatedVars + generatedCode;
+          runtime.safeCall(globalThis.console.log(tmp21));
+          tmp22 = generatedVars + generatedCode;
+          res1 = runtime.safeCall(eval(tmp22));
           end = runtime.safeCall(globalThis.performance.now());
           Main.#specializedCode = res1;
-          tmp12 = end - begin;
-          Main.#compileAndSpecializationTime = tmp12;
+          tmp23 = end - begin;
+          Main.#compileAndSpecializationTime = tmp23;
           runtime.safeCall(sections.push(res1));
         }
         scrut2 = res.codegen.diagnostics.length > 0;
         if (scrut2 === true) {
-          tmp13 = runtime.safeCall(res.codegen.diagnostics.join("\n"));
-          tmp14 = "Diagnostics:\n" + tmp13;
-          runtime.safeCall(sections.push(tmp14));
+          tmp24 = runtime.safeCall(res.codegen.diagnostics.join("\n"));
+          tmp25 = "Diagnostics:\n" + tmp24;
+          runtime.safeCall(sections.push(tmp25));
         }
         scrut3 = sections.length > 0;
         if (scrut3 === true) {
-          tmp15 = runtime.safeCall(sections.join("\n\n"));
+          tmp26 = runtime.safeCall(sections.join("\n\n"));
         } else {
-          tmp15 = "No specialized code was generated.";
+          tmp26 = "No specialized code was generated.";
         }
-        Main.#outputPanel.textContent = tmp15;
+        Main.#outputPanel.textContent = tmp26;
         scrut4 = res.codegen.diagnostics.length > 0;
         if (scrut4 === true) {
-          tmp16 = "Compilation completed with code generation diagnostics.";
+          tmp27 = "Compilation completed with code generation diagnostics.";
         } else {
           if (hasGeneratedCode === true) {
-            tmp17 = runtime.safeCall(Main.#compileAndSpecializationTime.toString());
-            tmp18 = "Compilation succeeded. Time: " + tmp17;
-            tmp19 = tmp18 + "ms";
+            tmp28 = runtime.safeCall(Main.#compileAndSpecializationTime.toString());
+            tmp29 = "Compilation succeeded. Time: " + tmp28;
+            tmp30 = tmp29 + "ms";
           } else {
-            tmp19 = "Compilation completed. No specialized code was generated.";
+            tmp30 = "Compilation completed. No specialized code was generated.";
           }
-          tmp16 = tmp19;
+          tmp27 = tmp30;
         }
-        Main.#statusPanel.textContent = tmp16;
+        Main.#statusPanel.textContent = tmp27;
         return runtime.Unit
       });
       lambda6 = (undefined, function (error) {
